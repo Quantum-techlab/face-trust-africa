@@ -60,6 +60,82 @@ const Index = () => {
         <MovingSpotlight />
       </section>
 
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight">Powered by Advanced AI</h2>
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our system combines multiple AI branches to deliver accurate, secure, and real-time identity verification
+            </p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse bg-background rounded-lg shadow-elegant overflow-hidden">
+              <thead>
+                <tr className="bg-[hsl(var(--brand)/0.08)]">
+                  <th className="text-left p-4 font-semibold text-foreground border-b">AI Feature</th>
+                  <th className="text-left p-4 font-semibold text-foreground border-b">AI Branch</th>
+                  <th className="text-left p-4 font-semibold text-foreground border-b">What It Does</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium">Face Detection & Recognition</td>
+                  <td className="p-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-[hsl(var(--brand)/0.12)] text-[hsl(var(--brand))]">
+                      Computer Vision + Deep Learning
+                    </span>
+                  </td>
+                  <td className="p-4 text-muted-foreground">Detects a face from webcam input and compares it to known faces in database.</td>
+                </tr>
+                <tr className="border-b hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium">Liveness Detection (Anti-Spoofing)</td>
+                  <td className="p-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-[hsl(var(--brand-contrast)/0.12)] text-[hsl(var(--brand-contrast))]">
+                      Computer Vision + Machine Learning
+                    </span>
+                  </td>
+                  <td className="p-4 text-muted-foreground">Verifies if the face input is real (not a photo or screen).</td>
+                </tr>
+                <tr className="border-b hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium">Confidence Scoring</td>
+                  <td className="p-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      Machine Learning
+                    </span>
+                  </td>
+                  <td className="p-4 text-muted-foreground">Assigns a score to how confident the system is in the face match.</td>
+                </tr>
+                <tr className="border-b hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium">Fraud/Anomaly Detection</td>
+                  <td className="p-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                      Machine Learning
+                    </span>
+                  </td>
+                  <td className="p-4 text-muted-foreground">Flags unusual attempts or repeated mismatches.</td>
+                </tr>
+                <tr className="hover:bg-muted/50 transition-colors">
+                  <td className="p-4 font-medium">AI Chat Assistant <span className="text-xs text-muted-foreground">(Optional)</span></td>
+                  <td className="p-4">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                      Natural Language Processing (NLP)
+                    </span>
+                  </td>
+                  <td className="p-4 text-muted-foreground">Provides real-time guidance or explanations to the user/officer.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              All AI models are optimized for low-bandwidth environments and real-time processing
+            </p>
+          </div>
+        </div>
+      </section>
+
       <footer className="container mx-auto max-w-6xl px-4 py-10 text-xs text-muted-foreground">
         © {new Date().getFullYear()} FaceTrust AI. Built for Africa.
       </footer>
