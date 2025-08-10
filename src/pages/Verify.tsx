@@ -4,6 +4,7 @@ import SEO from "@/components/SEO";
 import CameraCapture from "@/components/CameraCapture";
 import VerificationResultCard from "@/components/VerificationResultCard";
 import { verifyFace, logVerification, getVerificationLogs, type VerificationLog } from "@/services/verification";
+import { searchOpenWeb, type OSINTResult } from "@/services/osint";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +19,8 @@ const Verify: React.FC = () => {
   const [logs, setLogs] = useState<VerificationLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [osint, setOsint] = useState<OSINTResult | null>(null);
+  const [osintLoading, setOsintLoading] = useState(false);
 
   // Get user location for logging
   useEffect(() => {
@@ -53,7 +56,22 @@ const Verify: React.FC = () => {
 
       const res = await verifyFace(dataUrl);
       setResult(res);
-      
+
+      // Run OSINT scan (mock) after face verification
+      setOsint(null);
+      setOsintLoading(true);
+      toast.info("Scanning open web for public photos & profiles...", {
+        description: "Reverse image search (mock) and signals collection"
+      });
+      try {
+        const intel = await searchOpenWeb(dataUrl, res.identity?.full_name || undefined);
+        setOsint(intel);
+      } catch (err) {
+        console.error("OSINT error:", err);
+      } finally {
+        setOsintLoading(false);
+      }
+
       // Log the verification
       await logVerification({ 
         ts: Date.now(), 
