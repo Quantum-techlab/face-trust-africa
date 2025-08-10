@@ -1,73 +1,37 @@
-# Welcome to your Lovable project
+# FaceTrust AI – Real-time Face Verification (MVP)
 
-## Project info
+A sleek, mobile‑first web app that demonstrates core identity verification flows:
+- Webcam face capture
+- Liveness indicator (mocked)
+- AI face matching (mocked)
+- Open‑web OSINT preview (mocked reverse image search + socials)
+- Local verification logs for audit trail
 
-**URL**: https://lovable.dev/projects/c73e1b28-7f6e-42a9-8d1f-c7d7b36ecb33
+## Tech Stack
+- Vite + React + TypeScript
+- Tailwind CSS + shadcn-ui components
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/c73e1b28-7f6e-42a9-8d1f-c7d7b36ecb33) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+## Getting Started
+```bash
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+Visit http://localhost:5173
 
-**Edit a file directly in GitHub**
+## Core Flows
+- Home: overview of features and AI branches powering the system
+- Verify: capture face → run mocked verification → view results & logs
+- Login: placeholder for future Supabase Auth
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deployment
+Deploy to any static hosting (e.g., Vercel). Build with:
+```bash
+npm run build
+```
+Output is in dist/.
 
-**Use GitHub Codespaces**
+## Notes
+- All AI is mocked for demo. Replace services in src/services/* with real providers (Azure Face API, DeepFace, etc.).
+- OSINT module is illustrative only and does not scrape the web.
+- No Lovable branding is present in the app UI or metadata.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c73e1b28-7f6e-42a9-8d1f-c7d7b36ecb33) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
