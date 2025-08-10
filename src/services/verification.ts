@@ -179,7 +179,7 @@ export async function verifyFace(imageDataUrl: string): Promise<VerificationResp
         device_fingerprint_mismatch: Math.random() > 0.8
       },
       processing_time: processingTime,
-      image_quality
+      image_quality: imageQuality
     };
   }
   
@@ -199,7 +199,7 @@ export async function verifyFace(imageDataUrl: string): Promise<VerificationResp
       reason: Math.random() > 0.5 ? "No matching identity found in database" : "Face match confidence too low",
       fraud_indicators: Object.values(fraudIndicators).some(Boolean) ? fraudIndicators : undefined,
       processing_time: processingTime,
-      image_quality
+      image_quality: imageQuality
     };
   }
   
@@ -213,7 +213,7 @@ export async function verifyFace(imageDataUrl: string): Promise<VerificationResp
     liveness,
     identity: selectedIdentity,
     processing_time: processingTime,
-    image_quality
+    image_quality: imageQuality
   };
 }
 

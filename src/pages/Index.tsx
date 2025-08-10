@@ -15,10 +15,10 @@ const Index = () => {
           "@type": "Organization",
           name: "FaceTrust AI",
           url: window.location.origin,
-          sameAs: ["https://lovable.dev"],
+          
         }}
       />
-      <header className="container mx-auto max-w-6xl px-4 py-8 flex items-center justify-between">
+      <header className="container mx-auto max-w-6xl px-4 py-8 flex items-center justify-between" role="banner">
         <Link to="/" className="font-semibold tracking-tight">
           FaceTrust <span className="text-[hsl(var(--brand))]">AI</span>
         </Link>
