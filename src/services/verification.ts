@@ -4,25 +4,53 @@ export interface VerificationResponse {
   liveness?: number;   // 0..1
   identity?: {
     full_name: string;
-    nin?: string;
-    license_number?: string;
+    // Name breakdown
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
+
+    // Government IDs
+    nin?: string; // National Identity Number
+    license_number?: string; // Driver's License Number
+    passport_number?: string;
+    unique_id_number?: string; // Generic unique ID when applicable
+
+    // Demographics
     gender?: string;
+    date_of_birth?: string; // ISO date string
+    nationality?: string;
     age_estimate?: number;
+
+    // Contact & Address (city-level granularity for MVP)
     phone?: string;
     email?: string;
-    address?: string;
+    address?: string; // Kept for backward compatibility
+    address_city?: string;
+    address_state?: string;
+    address_country?: string;
+
+    // Social
     social_media?: {
       facebook?: string;
       twitter?: string;
       instagram?: string;
       linkedin?: string;
     };
+
+    // Public Records
     public_records?: {
       voter_registration?: boolean;
       business_registration?: string;
       education?: string[];
       employment?: string;
     };
+
+    // Official Records / Status
+    drivers_license_status?: "Valid" | "Expired" | "Suspended";
+    passport_status?: "Valid" | "Expired";
+    voters_id_status?: "Active" | "Inactive";
+
+    // Risk & verification history
     verification_history?: {
       last_verified?: string;
       verification_count?: number;
@@ -63,16 +91,29 @@ export interface VerificationLog {
 }
 
 // Enhanced mock data for demonstration
-const mockIdentities = [
+const mockIdentities: NonNullable<VerificationResponse["identity"]>[] = [
   {
     full_name: "Adebayo Johnson",
+    first_name: "Adebayo",
+    middle_name: "",
+    last_name: "Johnson",
     nin: "12345678901",
+    unique_id_number: "NIN-12345678901",
     license_number: "LAG-AB123456",
+    drivers_license_status: "Valid",
+    passport_number: "A12345678",
+    passport_status: "Valid",
+    voters_id_status: "Active",
     gender: "Male",
+    date_of_birth: "1992-05-14",
+    nationality: "Nigerian",
     age_estimate: 32,
     phone: "+234-801-234-5678",
     email: "adebayo.johnson@email.com",
-    address: "15 Victoria Island, Lagos State, Nigeria",
+    address: "Lagos, Lagos State, Nigeria",
+    address_city: "Lagos",
+    address_state: "Lagos State",
+    address_country: "Nigeria",
     social_media: {
       facebook: "facebook.com/adebayo.johnson",
       twitter: "@adebayoj",
@@ -92,13 +133,26 @@ const mockIdentities = [
   },
   {
     full_name: "Fatima Abdullahi",
+    first_name: "Fatima",
+    middle_name: "",
+    last_name: "Abdullahi",
     nin: "98765432109",
+    unique_id_number: "NIN-98765432109",
     license_number: "ABJ-CD789012",
+    drivers_license_status: "Valid",
+    passport_number: "B98765432",
+    passport_status: "Valid",
+    voters_id_status: "Active",
     gender: "Female",
+    date_of_birth: "1997-09-22",
+    nationality: "Nigerian",
     age_estimate: 28,
     phone: "+234-803-987-6543",
     email: "fatima.abdullahi@email.com",
-    address: "42 Garki District, Abuja, FCT, Nigeria",
+    address: "Abuja, FCT, Nigeria",
+    address_city: "Abuja",
+    address_state: "FCT",
+    address_country: "Nigeria",
     social_media: {
       instagram: "@fatima_abdullahi",
       linkedin: "linkedin.com/in/fatima-abdullahi"
@@ -116,13 +170,26 @@ const mockIdentities = [
   },
   {
     full_name: "Chinedu Okafor",
+    first_name: "Chinedu",
+    middle_name: "",
+    last_name: "Okafor",
     nin: "11223344556",
+    unique_id_number: "NIN-11223344556",
     license_number: "PH-EF345678",
+    drivers_license_status: "Suspended",
+    passport_number: "P56473829",
+    passport_status: "Expired",
+    voters_id_status: "Inactive",
     gender: "Male",
+    date_of_birth: "1989-12-03",
+    nationality: "Nigerian",
     age_estimate: 35,
     phone: "+234-805-111-2233",
     email: "chinedu.okafor@email.com",
-    address: "78 GRA Phase 2, Port Harcourt, Rivers State, Nigeria",
+    address: "Port Harcourt, Rivers State, Nigeria",
+    address_city: "Port Harcourt",
+    address_state: "Rivers State",
+    address_country: "Nigeria",
     social_media: {
       facebook: "facebook.com/chinedu.okafor",
       twitter: "@chineduo",
