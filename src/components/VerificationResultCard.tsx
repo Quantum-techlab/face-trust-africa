@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { CheckCircle2, ShieldAlert, AlertCircle, User, Phone, Mail, MapPin, Calendar, Shield, Clock, Camera, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -10,13 +11,23 @@ interface VerificationResult {
   liveness?: number;
   identity?: {
     full_name: string;
+    first_name?: string;
+    middle_name?: string;
+    last_name?: string;
     nin?: string;
     license_number?: string;
+    passport_number?: string;
+    unique_id_number?: string;
     gender?: string;
+    date_of_birth?: string;
+    nationality?: string;
     age_estimate?: number;
     phone?: string;
     email?: string;
     address?: string;
+    address_city?: string;
+    address_state?: string;
+    address_country?: string;
     social_media?: {
       facebook?: string;
       twitter?: string;
@@ -29,6 +40,9 @@ interface VerificationResult {
       education?: string[];
       employment?: string;
     };
+    drivers_license_status?: "Valid" | "Expired" | "Suspended";
+    passport_status?: "Valid" | "Expired";
+    voters_id_status?: "Active" | "Inactive";
     verification_history?: {
       last_verified?: string;
       verification_count?: number;
@@ -61,6 +75,14 @@ const formatDate = (dateStr?: string) => {
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+const formatDOB = (iso?: string) => {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 };
 
 const getRiskLevel = (score?: number) => {
@@ -109,7 +131,7 @@ const VerificationResultCard: React.FC<{ result: VerificationResult | null; load
   const qualityInfo = getQualityLevel(avgQuality);
 
   return (
-    <article className="rounded-lg border shadow-sm bg-card">
+    <motion.article className="rounded-lg border shadow-sm bg-card" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {/* Header */}
       <div className="p-6 pb-4">
         <header className="flex items-center gap-3 mb-4">
@@ -164,80 +186,129 @@ const VerificationResultCard: React.FC<{ result: VerificationResult | null; load
           </TabsList>
 
           <TabsContent value="identity" className="mt-4 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <div>
+            <div className="space-y-4">
+              {/* Basic Identity */}
+              <div className="flex items-start gap-3">
+                <User className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                <div className="w-full">
                   <p className="font-medium">{result.identity.full_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {result.identity.gender && `${result.identity.gender}, `}
-                    {result.identity.age_estimate && `Age: ${result.identity.age_estimate}`}
-                  </p>
+                  <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
+                    {result.identity.first_name && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">First Name:</span><span>{result.identity.first_name}</span></div>
+                    )}
+                    {result.identity.middle_name && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Middle Name:</span><span>{result.identity.middle_name}</span></div>
+                    )}
+                    {result.identity.last_name && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Last Name:</span><span>{result.identity.last_name}</span></div>
+                    )}
+                    {result.identity.gender && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Gender:</span><span>{result.identity.gender}</span></div>
+                    )}
+                    {result.identity.date_of_birth && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Date of Birth:</span><span>{formatDOB(result.identity.date_of_birth)}</span></div>
+                    )}
+                    {result.identity.nationality && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Nationality:</span><span>{result.identity.nationality}</span></div>
+                    )}
+                    {result.identity.unique_id_number && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Unique ID:</span><span className="font-mono">{result.identity.unique_id_number}</span></div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {result.identity.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{result.identity.phone}</span>
-                </div>
-              )}
+              <Separator />
 
-              {result.identity.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{result.identity.email}</span>
+              {/* Contact & Location */}
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  {result.identity.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{result.identity.phone}</span>
+                    </div>
+                  )}
+                  {result.identity.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span>{result.identity.email}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {result.identity.address && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{result.identity.address}</span>
+                  <span>
+                    {(result.identity.address_city || result.identity.address_state || result.identity.address_country) ? (
+                      <>
+                        {result.identity.address_city ? `${result.identity.address_city}` : ''}
+                        {result.identity.address_state ? `${result.identity.address_city ? ', ' : ''}${result.identity.address_state}` : ''}
+                        {result.identity.address_country ? `${(result.identity.address_city || result.identity.address_state) ? ', ' : ''}${result.identity.address_country}` : ''}
+                      </>
+                    ) : (
+                      result.identity.address || '-'
+                    )}
+                  </span>
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Official Documents */}
+              <div>
+                <h4 className="font-medium mb-2">Official Documents</h4>
+                <div className="space-y-2 text-sm">
+                  {result.identity.nin && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">NIN:</span><span className="font-mono">{result.identity.nin}</span></div>
+                  )}
+                  {result.identity.license_number && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Driver's License No:</span><span className="font-mono">{result.identity.license_number}</span></div>
+                  )}
+                  {result.identity.passport_number && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Passport No:</span><span className="font-mono">{result.identity.passport_number}</span></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Official Status */}
+              <div>
+                <h4 className="font-medium mb-2">Official Status</h4>
+                <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
+                    <span className="text-muted-foreground">License</span>
+                    <Badge variant="outline">{result.identity.drivers_license_status || 'Unknown'}</Badge>
+                  </div>
+                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
+                    <span className="text-muted-foreground">Passport</span>
+                    <Badge variant="outline">{result.identity.passport_status || 'Unknown'}</Badge>
+                  </div>
+                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
+                    <span className="text-muted-foreground">Voter's ID</span>
+                    <Badge variant="outline">{result.identity.voters_id_status || 'Unknown'}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              {result.identity.social_media && Object.keys(result.identity.social_media).length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <h4 className="font-medium mb-2">Social Media Presence</h4>
+                    <div className="space-y-1 text-sm">
+                      {Object.entries(result.identity.social_media).map(([platform, url]) => (
+                        <div key={platform} className="flex justify-between">
+                          <span className="text-muted-foreground capitalize">{platform}:</span>
+                          <a href={`https://${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-48">
+                            {url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
-
-            <Separator />
-
-            <div>
-              <h4 className="font-medium mb-2">Official Documents</h4>
-              <div className="space-y-2">
-                {result.identity.nin && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">NIN:</span>
-                    <span className="text-sm font-mono">{result.identity.nin}</span>
-                  </div>
-                )}
-                {result.identity.license_number && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">License:</span>
-                    <span className="text-sm font-mono">{result.identity.license_number}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Social Media */}
-            {result.identity.social_media && Object.keys(result.identity.social_media).length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <h4 className="font-medium mb-2">Social Media Presence</h4>
-                  <div className="space-y-1">
-                    {Object.entries(result.identity.social_media).map(([platform, url]) => (
-                      <div key={platform} className="flex justify-between">
-                        <span className="text-sm text-muted-foreground capitalize">{platform}:</span>
-                        <a href={`https://${url}`} target="_blank" rel="noopener noreferrer" 
-                           className="text-sm text-blue-600 hover:underline truncate max-w-48">
-                          {url}
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </TabsContent>
 
           <TabsContent value="records" className="mt-4 space-y-4">
@@ -448,7 +519,7 @@ const VerificationResultCard: React.FC<{ result: VerificationResult | null; load
           </Tabs>
         </div>
       )}
-    </article>
+    </motion.article>
   );
 };
 
