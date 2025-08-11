@@ -33,5 +33,5 @@ Output is in dist/.
 ## Notes
 - All AI is mocked for demo. Replace services in src/services/* with real providers (Azure Face API, DeepFace, etc.).
 - OSINT module is illustrative only and does not scrape the web.
-- No Lovable branding is present in the app UI or metadata.
+
 
