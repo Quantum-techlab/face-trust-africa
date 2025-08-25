@@ -1,0 +1,32 @@
+{
+  "Abdulrasaq_Abdulrasaq": {
+    "full_name": "Abdulrasaq Abdulrasaq",
+    "first_name": "Abdulrasaq",
+    "last_name": "Abdulrasaq",
+    "position": "Founder & CEO",
+    "department": "Executive",
+    "employee_id": "FT001",
+    "email": "abdulrasaq@facetrust.ai",
+    "phone": "+234-801-234-5678",
+    "nin": "12345678901",
+    "unique_id_number": "FT-EMP-001",
+    "gender": "Male",
+    "date_of_birth": "1995-01-01",
+    "nationality": "Nigerian",
+    "address_city": "Lagos",
+    "address_state": "Lagos State",
+    "address_country": "Nigeria",
+    "hire_date": "2024-01-01",
+    "access_level": "Administrator",
+    "social_media": {
+      "linkedin": "linkedin.com/in/abdulrasaq-abdulrasaq",
+      "twitter": "@abdulrasaq"
+    },
+    "verification_history": {
+      "last_verified": "2024-01-20T10:30:00Z",
+      "verification_count": 1,
+      "risk_score": 0
+    },
+    "bio": "Founder and CEO of FaceTrust AI, passionate about building secure identity verification solutions for Africa."
+  }
+}

@@ -1,3 +1,5 @@
+import { faceRecognitionService } from './faceRecognitionService';
+
 export interface VerificationResponse {
   matched: boolean;
   confidence?: number; // 0..1
@@ -212,6 +214,27 @@ const mockIdentities: NonNullable<VerificationResponse["identity"]>[] = [
 // Simulate AI processing with realistic delays and outcomes
 export async function verifyFace(imageDataUrl: string): Promise<VerificationResponse> {
   const startTime = Date.now();
+  
+  // Try Python face recognition API first
+  try {
+    const apiResult = await faceRecognitionService.recognizeFace(imageDataUrl);
+    
+    // If we got a successful team member match, return it
+    if (apiResult.matched && apiResult.identity) {
+      console.log('Face recognized by Python API:', apiResult.identity.full_name);
+      return {
+        ...apiResult,
+        processing_time: Date.now() - startTime
+      };
+    }
+    
+    // If API is available but no match, continue with mock data
+    if (faceRecognitionService.isAvailable()) {
+      console.log('Python API available but no team member match found');
+    }
+  } catch (error) {
+    console.log('Python API error, falling back to mock:', error);
+  }
   
   // Simulate network latency and AI processing time
   await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
