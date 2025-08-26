@@ -11,6 +11,24 @@ node_modules
 dist
 dist-ssr
 *.local
+.bun/
+bun.lockb
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+
+# Build artifacts
+build/
+coverage/
+coverage.xml
+*.coverage
 
 # Editor directories and files
 .vscode/*

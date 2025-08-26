@@ -124,7 +124,15 @@ const Verify: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background gradient aesthetics */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--brand)/0.06)] via-transparent to-transparent" />
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full blur-3xl opacity-30"
+             style={{ background: 'radial-gradient(closest-side, hsl(var(--brand)/0.35), transparent)' }} />
+        <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full blur-3xl opacity-30"
+             style={{ background: 'radial-gradient(closest-side, hsl(var(--brand-contrast)/0.35), transparent)' }} />
+      </div>
       <SEO
         title="Verify Identity – FaceTrust AI"
         description="Capture a face via webcam and verify identity in real-time with FaceTrust AI."
@@ -139,7 +147,7 @@ const Verify: React.FC = () => {
       />
       
       {/* Header */}
-      <header className="border-b bg-card">
+      <header className="border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto max-w-6xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -150,7 +158,7 @@ const Verify: React.FC = () => {
                 </Link>
               </Button>
               <div>
-                <h1 className="text-xl font-semibold">Face Verification System</h1>
+                <h1 className="text-xl font-semibold tracking-tight">Face Verification System</h1>
                 <p className="text-sm text-muted-foreground">Real-time identity verification with AI</p>
               </div>
             </div>
@@ -202,7 +210,7 @@ const Verify: React.FC = () => {
                       <img 
                         src={img} 
                         alt="Captured face for verification" 
-                        className="w-full rounded-lg border shadow-sm" 
+                        className="w-full rounded-lg border shadow-elegant" 
                         loading="lazy" 
                       />
                       <figcaption className="mt-2 text-xs text-muted-foreground">
@@ -223,7 +231,7 @@ const Verify: React.FC = () => {
 
           {/* Sidebar - Logs */}
           <div className="space-y-6">
-            <section className="rounded-lg border bg-card p-4">
+            <section className="rounded-lg border bg-card/80 backdrop-blur p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium">Recent Verifications</h3>
                 <Badge variant="secondary">{logs.length}</Badge>
@@ -287,7 +295,7 @@ const Verify: React.FC = () => {
             </section>
 
             {/* System Status */}
-            <section className="rounded-lg border bg-card p-4">
+            <section className="rounded-lg border bg-card/80 backdrop-blur p-4">
               <h3 className="font-medium mb-3">System Status</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">

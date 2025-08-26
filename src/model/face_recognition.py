@@ -7,8 +7,9 @@ import json
 from datetime import datetime
 
 class FaceRecognitionModel:
-    def __init__(self, models_path="Models"):
-        self.models_path = models_path
+    def __init__(self, models_path=None):
+        # Resolve Models directory relative to this file to avoid CWD issues
+        self.models_path = models_path or os.path.join(os.path.dirname(__file__), "Models")
         self.images = []
         self.class_names = []
         self.encode_list_known = []

@@ -4,5 +4,5 @@ numpy==1.24.3
 imutils==0.5.4
 flask==2.3.3
 flask-cors==4.0.0
-dlib==19.24.2
-cmake==3.27.7
+# Use prebuilt Windows wheel to avoid compilation issues
+dlib-bin==19.24.2

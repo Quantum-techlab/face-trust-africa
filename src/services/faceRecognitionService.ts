@@ -52,10 +52,9 @@ export class FaceRecognitionService {
   }
 
   public async recognizeFace(imageDataUrl: string): Promise<FaceRecognitionResponse> {
+    // Try the API even if initial health check failed; it may have started after page load
     if (!this.isApiAvailable) {
-      // Fallback to mock verification if API is not available
-      console.log('Using mock verification - Python API not available');
-      return this.mockVerification();
+      await this.checkApiHealth();
     }
 
     try {
@@ -85,7 +84,7 @@ export class FaceRecognitionService {
 
   public async getTeamMembers(): Promise<any> {
     if (!this.isApiAvailable) {
-      return { team_members: [], team_data: {} };
+      await this.checkApiHealth();
     }
 
     try {
@@ -102,7 +101,10 @@ export class FaceRecognitionService {
 
   public async uploadTeamMember(name: string, imageDataUrl: string, teamData: any): Promise<any> {
     if (!this.isApiAvailable) {
-      throw new Error('Face Recognition API not available');
+      await this.checkApiHealth();
+      if (!this.isApiAvailable) {
+        throw new Error('Face Recognition API not available');
+      }
     }
 
     try {
