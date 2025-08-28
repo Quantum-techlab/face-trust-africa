@@ -45,9 +45,9 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* FaceTrust brand tokens */
-    --brand: 257 85% 60%; /* royal violet */
-    --brand-contrast: 200 95% 55%; /* azure */
+    /* FaceTrust brand tokens - refined complementary palette */
+    --brand: 258 80% 58%; /* royal violet */
+    --brand-contrast: 198 90% 52%; /* azure cyan */
     --brand-foreground: 0 0% 100%;
 
     /* Elevation & motion */
@@ -94,8 +94,8 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --brand: 257 85% 68%;
-    --brand-contrast: 200 95% 62%;
+    --brand: 258 80% 65%;
+    --brand-contrast: 198 90% 60%;
     --brand-foreground: 0 0% 100%;
   }
 }

@@ -28,5 +28,35 @@
       "risk_score": 0
     },
     "bio": "Founder and CEO of FaceTrust AI, passionate about building secure identity verification solutions for Africa."
+  },
+  "Mukhtar_Fathiyah": {
+    "full_name": "Mukhtar Fathiyah",
+    "first_name": "Mukhtar",
+    "last_name": "Fathiyah",
+    "position": "Co-founder & COO",
+    "department": "Operations",
+    "employee_id": "FT002",
+    "email": "mukhtar.fathiyah@facetrust.ai",
+    "phone": "+234-802-555-1234",
+    "nin": "98765012345",
+    "unique_id_number": "FT-EMP-002",
+    "gender": "Female",
+    "date_of_birth": "1996-07-12",
+    "nationality": "Nigerian",
+    "address_city": "Abuja",
+    "address_state": "FCT",
+    "address_country": "Nigeria",
+    "hire_date": "2024-02-15",
+    "access_level": "Administrator",
+    "social_media": {
+      "linkedin": "linkedin.com/in/mukhtar-fathiyah",
+      "twitter": "@mukhtarfathiyah"
+    },
+    "verification_history": {
+      "last_verified": "2024-02-20T09:00:00Z",
+      "verification_count": 1,
+      "risk_score": 0
+    },
+    "bio": "Operations leader focused on reliable, scalable identity verification for African markets."
   }
 }

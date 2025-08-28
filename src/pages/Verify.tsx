@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, History, MapPin, User, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import ModelInfo from "@/components/ModelInfo";
 
 const Verify: React.FC = () => {
   const [img, setImg] = useState<string | null>(null);
@@ -163,6 +164,7 @@ const Verify: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-xs">Model: LBPH</Badge>
               <Badge variant="outline" className="text-xs">
                 <User className="w-3 h-3 mr-1" />
                 Officer: Demo User
@@ -323,6 +325,9 @@ const Verify: React.FC = () => {
                 <p>Version: 1.0.0-MVP</p>
               </div>
             </section>
+
+            {/* Model Info */}
+            <ModelInfo trained={true} members={1} />
           </div>
         </div>
       </div>

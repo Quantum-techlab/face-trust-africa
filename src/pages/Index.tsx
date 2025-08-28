@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background gradient */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--brand)/0.06)] via-transparent to-transparent" />
+        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full blur-3xl opacity-30" style={{ background: 'radial-gradient(closest-side, hsl(var(--brand)/0.35), transparent)' }} />
+        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full blur-3xl opacity-30" style={{ background: 'radial-gradient(closest-side, hsl(var(--brand-contrast)/0.35), transparent)' }} />
+      </div>
       <SEO
         title="FaceTrust AI – Real-time Face Verification"
         description="Verify identities instantly using AI-powered face recognition and liveness checks. Built for Nigeria/Africa."
@@ -46,13 +52,38 @@ const Index = () => {
                   <Link to="/login">Officer Login</Link>
                 </Button>
               </div>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--brand)/0.12)] text-[hsl(var(--brand))] text-xs font-medium">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  Haar Detection
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--brand-contrast)/0.12)] text-[hsl(var(--brand-contrast))] text-xs font-medium">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v18m9-9H3"/></svg>
+                  LBPH Features
+                </span>
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4"/></svg>
+                  On-device
+                </span>
+              </div>
               <p className="mt-4 text-xs text-muted-foreground">
                 Secure by design with Supabase Auth & RLS (connect your Supabase to enable backend).
               </p>
             </div>
             <div className="relative">
               <div className="aspect-video w-full rounded-xl border bg-gradient-to-br from-[hsl(var(--brand)/0.08)] to-[hsl(var(--brand-contrast)/0.08)] shadow-elegant grid place-items-center">
-                <span className="text-sm text-muted-foreground">Webcam preview appears on Verify page</span>
+                <div className="text-center p-6">
+                  <p className="text-sm text-muted-foreground">Model Pipeline</p>
+                  <div className="mt-3 flex items-center justify-center gap-2 text-xs">
+                    <span className="px-2 py-1 rounded border bg-background">Capture</span>
+                    <span>→</span>
+                    <span className="px-2 py-1 rounded border bg-background">Detect</span>
+                    <span>→</span>
+                    <span className="px-2 py-1 rounded border bg-background">LBPH</span>
+                    <span>→</span>
+                    <span className="px-2 py-1 rounded border bg-background">Match</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

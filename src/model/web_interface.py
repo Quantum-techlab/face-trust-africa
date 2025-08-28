@@ -3,7 +3,7 @@ from flask_cors import CORS
 import base64
 import cv2
 import numpy as np
-from face_recognition import FaceRecognitionModel
+from face_model import FaceRecognitionModel
 import os
 import json
 
@@ -29,7 +29,7 @@ def home():
 def health():
     return jsonify({
         "status": "healthy",
-        "model_loaded": len(face_model.encode_list_known) > 0,
+        "model_loaded": len(face_model.class_names) > 0,
         "known_faces": len(face_model.class_names),
         "team_members": list(face_model.class_names)
     })
