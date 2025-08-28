@@ -218,20 +218,11 @@ export async function verifyFace(imageDataUrl: string): Promise<VerificationResp
   // Try Python face recognition API first
   try {
     const apiResult = await faceRecognitionService.recognizeFace(imageDataUrl);
-    
-    // If we got a successful team member match, return it
-    if (apiResult.matched && apiResult.identity) {
-      console.log('Face recognized by Python API:', apiResult.identity.full_name);
-      return {
-        ...apiResult,
-        processing_time: Date.now() - startTime
-      };
-    }
-    
-    // If API is available but no match, continue with mock data
-    if (faceRecognitionService.isAvailable()) {
-      console.log('Python API available but no team member match found');
-    }
+    // Always prefer API result if reachable (even if no match)
+    return {
+      ...apiResult,
+      processing_time: Date.now() - startTime
+    };
   } catch (error) {
     console.log('Python API error, falling back to mock:', error);
   }

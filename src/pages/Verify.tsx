@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowLeft, History, MapPin, User, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import ModelInfo from "@/components/ModelInfo";
+import { faceRecognitionService } from "@/services/faceRecognitionService";
 
 const Verify: React.FC = () => {
   const [img, setImg] = useState<string | null>(null);
@@ -22,6 +23,8 @@ const Verify: React.FC = () => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [osint, setOsint] = useState<OSINTResult | null>(null);
   const [osintLoading, setOsintLoading] = useState(false);
+  const [teamCount, setTeamCount] = useState<number>(0);
+  const [modelTrained, setModelTrained] = useState<boolean>(false);
 
   // Get user location for logging
   useEffect(() => {
@@ -44,6 +47,21 @@ const Verify: React.FC = () => {
   useEffect(() => {
     setLogs(getVerificationLogs());
   }, [result]);
+
+  // Fetch team/model status
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await faceRecognitionService.getTeamMembers();
+        const members = Array.isArray(data?.team_members) ? data.team_members.length : 0;
+        setTeamCount(members);
+        setModelTrained(members > 0);
+      } catch (e) {
+        setTeamCount(0);
+        setModelTrained(false);
+      }
+    })();
+  }, []);
 
   const onCapture = async (dataUrl: string, blob: Blob) => {
     setImg(dataUrl);
@@ -327,7 +345,7 @@ const Verify: React.FC = () => {
             </section>
 
             {/* Model Info */}
-            <ModelInfo trained={true} members={1} />
+            <ModelInfo trained={modelTrained} members={teamCount} />
           </div>
         </div>
       </div>
