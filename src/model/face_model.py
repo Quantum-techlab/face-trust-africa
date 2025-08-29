@@ -14,16 +14,31 @@ class FaceRecognitionModel:
         self.class_names = []
         self.encode_list_known = []
         self.team_data = {}
+        self.recognizer = None
+        self.model_trained = False
+        
+        print(f"Initializing Face Recognition Model...")
+        print(f"Models path: {self.models_path}")
+        
+        # Initialize components
         self.load_team_data()
         self.load_and_encode_images()
+        
+        print(f"Model initialization complete. Known members: {len(self.class_names)}")
     
     def load_team_data(self):
         """Load team member data from JSON file"""
+        team_data_path = os.path.join(self.models_path, 'team_data.json')
         try:
-            with open(os.path.join(self.models_path, 'team_data.json'), 'r') as f:
-                self.team_data = json.load(f)
-        except FileNotFoundError:
-            print("Team data file not found. Using default data.")
+            if os.path.exists(team_data_path):
+                with open(team_data_path, 'r') as f:
+                    self.team_data = json.load(f)
+                print(f"Loaded team data for {len(self.team_data)} members")
+            else:
+                print("Team data file not found. Creating default structure.")
+                self.team_data = {}
+        except Exception as e:
+            print(f"Error loading team data: {e}")
             self.team_data = {}
     
     def load_and_encode_images(self):
@@ -32,32 +47,50 @@ class FaceRecognitionModel:
         self.images = []
         self.class_names = []
         self.encode_list_known = []
+        self.model_trained = False
 
         if not os.path.exists(self.models_path):
-            print(f"Models folder '{self.models_path}' not found!")
+            print(f"ERROR: Models folder '{self.models_path}' not found!")
+            os.makedirs(self.models_path, exist_ok=True)
+            print(f"Created models directory: {self.models_path}")
             return
             
-        mylist = os.listdir(self.models_path)
-        image_files = [f for f in mylist if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        
-        for cls in image_files:
-            try:
-                curnt_img = cv2.imread(f'{self.models_path}/{cls}')
-                if curnt_img is not None:
-                    self.images.append(curnt_img)
-                    # Remove file extension to get the name
-                    name = os.path.splitext(cls)[0]
-                    self.class_names.append(name)
-                    print(f"Loaded image for: {name}")
-                else:
-                    print(f"Could not load image: {cls}")
-            except Exception as e:
-                print(f"Error loading {cls}: {e}")
-        
-        # Encode all loaded images and filter to only valid encodings
-        # Train LBPH face recognizer with grayscale faces
-        self.train_lbph(self.images, self.class_names)
-        print(f"Trained recognizer for members: {self.class_names}")
+        try:
+            mylist = os.listdir(self.models_path)
+            image_files = [f for f in mylist if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            
+            print(f"Found {len(image_files)} image files in models directory")
+            
+            if len(image_files) == 0:
+                print("WARNING: No image files found in models directory!")
+                return
+            
+            for cls in image_files:
+                try:
+                    image_path = os.path.join(self.models_path, cls)
+                    curnt_img = cv2.imread(image_path)
+                    if curnt_img is not None:
+                        self.images.append(curnt_img)
+                        # Remove file extension to get the name
+                        name = os.path.splitext(cls)[0]
+                        self.class_names.append(name)
+                        print(f"✓ Loaded image for: {name}")
+                    else:
+                        print(f"✗ Could not load image: {cls}")
+                except Exception as e:
+                    print(f"✗ Error loading {cls}: {e}")
+            
+            # Train LBPH face recognizer with grayscale faces
+            if len(self.images) > 0:
+                self.train_lbph(self.images, self.class_names)
+                print(f"✓ Model trained successfully for {len(self.class_names)} members: {self.class_names}")
+                self.model_trained = True
+            else:
+                print("✗ No valid images loaded - model not trained")
+                
+        except Exception as e:
+            print(f"ERROR: Failed to load images: {e}")
+            self.model_trained = False
     
     def detect_largest_face(self, gray: np.ndarray) -> Tuple[int, int, int, int] | None:
         # Enhance contrast for better detection

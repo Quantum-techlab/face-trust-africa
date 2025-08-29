@@ -166,31 +166,43 @@ const Verify: React.FC = () => {
       />
       
       {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header className="border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
         <div className="container mx-auto max-w-6xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="sm">
+            <div className="flex items-center gap-6">
+              <Button asChild variant="ghost" size="sm" className="hover:bg-[hsl(var(--brand)/0.1)]">
                 <Link to="/">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Home
                 </Link>
               </Button>
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight">Face Verification System</h1>
-                <p className="text-sm text-muted-foreground">Real-time identity verification with AI</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--brand))] to-[hsl(var(--brand-contrast))] flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight">Face Verification System</h1>
+                  <p className="text-sm text-muted-foreground">Real-time AI-powered identity verification</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-xs">Model: LBPH</Badge>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Live System</span>
+              </div>
+              <Badge variant="secondary" className="text-xs font-mono">LBPH v2.0</Badge>
               <Badge variant="outline" className="text-xs">
                 <User className="w-3 h-3 mr-1" />
-                Officer: Demo User
+                Demo Officer
               </Badge>
               <Button 
                 onClick={() => setShowLogs(!showLogs)} 
                 variant="outline" 
                 size="sm"
+                className="shadow-sm"
               >
                 <History className="w-4 h-4 mr-2" />
                 Logs ({logs.length})
@@ -205,47 +217,151 @@ const Verify: React.FC = () => {
           {/* Main Verification Area */}
           <div className="lg:col-span-2 space-y-6">
             {/* Camera Section */}
-            <section className="space-y-4">
+            <section className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Camera Capture</h2>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {location && (
-                    <>
-                      <MapPin className="w-4 h-4" />
-                      <span>Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</span>
-                    </>
-                  )}
+                <div>
+                  <h2 className="text-2xl font-bold">Camera Capture</h2>
+                  <p className="text-muted-foreground">Position your face clearly in the camera frame for accurate verification</p>
                 </div>
+                {location && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground px-3 py-1.5 rounded-full bg-muted/50">
+                    <MapPin className="w-4 h-4" />
+                    <span>Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}</span>
+                  </div>
+                )}
               </div>
               
-              <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <CameraCapture onCapture={onCapture} buttonLabel="Capture & Verify Identity" />
+              <div className="grid gap-8 lg:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="p-6 rounded-2xl border bg-gradient-to-br from-card to-card/50 shadow-sm">
+                    <CameraCapture onCapture={onCapture} buttonLabel="Capture & Verify Identity" />
+                  </div>
+                  
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-300">Model Status</span>
+                      </div>
+                      <p className="text-lg font-bold text-green-800 dark:text-green-200">
+                        {modelTrained ? 'Ready' : 'Training'}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Known Members</span>
+                      </div>
+                      <p className="text-lg font-bold text-blue-800 dark:text-blue-200">{teamCount}</p>
+                    </div>
+                  </div>
                 </div>
                 
                 {img && (
-                  <div className="space-y-3">
-                    <h3 className="font-medium">Captured Image</h3>
-                    <figure className="relative">
-                      <img 
-                        src={img} 
-                        alt="Captured face for verification" 
-                        className="w-full rounded-lg border shadow-elegant" 
-                        loading="lazy" 
-                      />
-                      <figcaption className="mt-2 text-xs text-muted-foreground">
-                        Image optimized for AI processing • {new Date().toLocaleTimeString()}
-                      </figcaption>
-                    </figure>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-[hsl(var(--brand))]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Captured Image
+                      </h3>
+                      <figure className="relative group">
+                        <img 
+                          src={img} 
+                          alt="Captured face for verification" 
+                          className="w-full rounded-xl border-2 border-[hsl(var(--brand)/0.2)] shadow-lg group-hover:shadow-xl transition-shadow" 
+                          loading="lazy" 
+                        />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <figcaption className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Captured at {new Date().toLocaleTimeString()} • Optimized for AI processing
+                        </figcaption>
+                      </figure>
+                    </div>
+                    
+                    {/* Processing Status */}
+                    {loading && (
+                      <div className="p-4 rounded-xl border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></div>
+                          <div>
+                            <p className="font-medium text-amber-700 dark:text-amber-300">Processing...</p>
+                            <p className="text-sm text-amber-600 dark:text-amber-400">Analyzing facial features and matching against database</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </section>
 
             {/* Results Section */}
-            <section>
-              <h2 className="text-lg font-medium mb-4">Verification Results</h2>
-              <VerificationResultCard result={result} loading={loading} />
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">Verification Results</h2>
+                  <p className="text-muted-foreground">Detailed analysis and identity verification outcome</p>
+                </div>
+                {result && (
+                  <Badge 
+                    variant={result.matched ? "default" : "destructive"} 
+                    className="text-sm px-4 py-2"
+                  >
+                    {result.matched ? "✓ Verified" : "✗ Failed"}
+                  </Badge>
+                )}
+              </div>
+              <div className="rounded-2xl border bg-gradient-to-br from-card to-card/50 shadow-sm overflow-hidden">
+                <VerificationResultCard result={result} loading={loading} />
+              </div>
+              
+              {/* OSINT Results */}
+              {(osint || osintLoading) && (
+                <div className="rounded-2xl border bg-gradient-to-br from-card to-card/50 shadow-sm p-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-[hsl(var(--brand-contrast))]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Open Source Intelligence (OSINT)
+                  </h3>
+                  {osintLoading ? (
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+                      <div className="w-5 h-5 border-2 border-[hsl(var(--brand-contrast))] border-t-transparent rounded-full animate-spin"></div>
+                      <div>
+                        <p className="font-medium">Scanning public databases...</p>
+                        <p className="text-sm text-muted-foreground">Searching social media, public records, and web presence</p>
+                      </div>
+                    </div>
+                  ) : osint && (
+                    <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-muted/30">
+                          <h4 className="font-medium mb-2">Social Media Presence</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Found {osint.social_media_profiles?.length || 0} social media profiles
+                          </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-muted/30">
+                          <h4 className="font-medium mb-2">Public Records</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {osint.public_records_found ? 'Records found' : 'No public records found'}
+                          </p>
+                        </div>
+                      </div>
+                      {osint.summary && (
+                        <div className="p-4 rounded-xl border bg-background">
+                          <h4 className="font-medium mb-2">Intelligence Summary</h4>
+                          <p className="text-sm text-muted-foreground">{osint.summary}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           </div>
 

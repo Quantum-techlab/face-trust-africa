@@ -14,7 +14,8 @@ export interface FaceRecognitionResponse {
   };
 }
 
-const API_BASE_URL = 'http://localhost:5000';
+const host = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : 'localhost';
+const API_BASE_URL = `http://${host}:5000`;
 
 export class FaceRecognitionService {
   private static instance: FaceRecognitionService;
@@ -77,6 +78,8 @@ export class FaceRecognitionService {
 
     } catch (error) {
       console.error('Face recognition API error:', error);
+      // Recheck health in background so the next attempt may work
+      try { await this.checkApiHealth(); } catch {}
       // Fallback to mock verification
       return this.mockVerification();
     }

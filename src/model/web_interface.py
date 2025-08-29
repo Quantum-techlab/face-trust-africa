@@ -27,11 +27,15 @@ def home():
 
 @app.route('/health')
 def health():
+    model_loaded = hasattr(face_model, 'model_trained') and face_model.model_trained and len(face_model.class_names) > 0
     return jsonify({
         "status": "healthy",
-        "model_loaded": len(face_model.class_names) > 0,
+        "model_loaded": model_loaded,
+        "model_trained": getattr(face_model, 'model_trained', False),
         "known_faces": len(face_model.class_names),
-        "team_members": list(face_model.class_names)
+        "team_members": list(face_model.class_names),
+        "models_path": face_model.models_path,
+        "server_running": True
     })
 
 @app.route('/team')
@@ -44,6 +48,14 @@ def get_team():
 @app.route('/recognize', methods=['POST'])
 def recognize_face():
     try:
+        # Check if model is trained
+        if not getattr(face_model, 'model_trained', False) or len(face_model.class_names) == 0:
+            return jsonify({
+                "error": "Model not trained or no known faces available",
+                "model_trained": getattr(face_model, 'model_trained', False),
+                "known_faces": len(face_model.class_names)
+            }), 400
+        
         data = request.get_json()
         
         if 'image' not in data:
@@ -191,4 +203,11 @@ def upload_team_member():
 if __name__ == '__main__':
     print("Starting FaceTrust AI Face Recognition Server...")
     print(f"Known team members: {face_model.class_names}")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print("Server will be available at:")
+    print("  - http://localhost:5000")
+    print("  - http://127.0.0.1:5000")
+    print("Press Ctrl+C to stop the server")
+    print("-" * 50)
+    
+    # Run without debug mode for stability
+    app.run(debug=False, host='0.0.0.0', port=5000)
