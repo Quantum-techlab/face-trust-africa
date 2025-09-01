@@ -449,14 +449,14 @@ const Verify: React.FC = () => {
                               Social Media Presence
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              Found {osint.social_media_profiles?.length || 0}{" "}
+                              Found {Object.keys(osint.socialLinks || {}).length || 0}{" "}
                               social media profiles
                             </p>
                           </div>
                           <div className="p-4 rounded-xl bg-muted/30">
                             <h4 className="font-medium mb-2">Public Records</h4>
                             <p className="text-sm text-muted-foreground">
-                              {osint.public_records_found
+                              {osint.sources && osint.sources.length > 0
                                 ? "Records found"
                                 : "No public records found"}
                             </p>
