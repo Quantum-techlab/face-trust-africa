@@ -5,6 +5,3 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python src/model/web_interface.py
     plan: free
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.10
