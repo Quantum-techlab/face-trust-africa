@@ -14,22 +14,24 @@ export interface FaceRecognitionResponse {
   };
 }
 
-const host =
-  typeof window !== "undefined" && window.location && window.location.hostname
-    ? window.location.hostname
-    : "localhost";
-const DEFAULT_BASE_URL = `http://${host}:5000`;
-const CANDIDATE_BASE_URLS = Array.from(
-  new Set([DEFAULT_BASE_URL, "http://localhost:5000", "http://127.0.0.1:5000"])
-);
+const DEFAULT_BASE_URL = "http://localhost:5000";
+const CANDIDATE_BASE_URLS = [
+  "http://localhost:5000",
+  "http://127.0.0.1:5000",
+  "http://0.0.0.0:5000"
+];
 
 export class FaceRecognitionService {
   private static instance: FaceRecognitionService;
   private isApiAvailable = false;
   private lastGoodBaseUrl: string | null = null;
+  private healthCheckInterval: NodeJS.Timeout | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
 
   private constructor() {
     this.checkApiHealth();
+    this.startHealthCheckInterval();
   }
 
   public static getInstance(): FaceRecognitionService {
@@ -53,20 +55,34 @@ export class FaceRecognitionService {
 
     for (const base of bases) {
       try {
-        const res = await fetch(`${base}${path}`, init);
+        console.log(`Attempting connection to: ${base}${path}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const res = await fetch(`${base}${path}`, {
+          ...init,
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (!res.ok) {
-          lastError = new Error(`HTTP ${res.status}`);
+          lastError = new Error(`HTTP ${res.status}: ${res.statusText}`);
+          console.warn(`Failed to connect to ${base}${path}: ${lastError.message}`);
           continue;
         }
+        
         const data = await res.json();
         this.lastGoodBaseUrl = base;
+        console.log(`✓ Successfully connected to: ${base}${path}`);
         return { data, baseUrl: base, response: res };
-      } catch (err) {
+      } catch (err: any) {
         lastError = err;
-        // try next base
+        console.warn(`Connection failed to ${base}${path}:`, err.message);
+        // Continue to next base
       }
     }
-    throw lastError ?? new Error("No backend reachable");
+    throw lastError ?? new Error("No Python backend reachable on any port");
   }
 
   private async checkApiHealth(): Promise<void> {
@@ -74,31 +90,52 @@ export class FaceRecognitionService {
       const { data, baseUrl } = await this.fetchWithFallback("/health", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(8000),
       });
-      console.log("Checking API health at:", `${baseUrl}/health`);
+      console.log("✓ API health check successful at:", `${baseUrl}/health`);
       this.isApiAvailable =
         !!data?.model_loaded && (data?.known_faces ?? 0) > 0;
+      this.reconnectAttempts = 0; // Reset on successful connection
       console.log("Face Recognition API Status:", data);
       console.log("API Available:", this.isApiAvailable, "Base URL:", baseUrl);
     } catch (error) {
-      console.warn("Face Recognition API not available:", error);
+      this.reconnectAttempts++;
+      console.warn(`✗ Face Recognition API not available (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}):`, error);
       this.isApiAvailable = false;
+      
+      // If we've exceeded max attempts, stop trying for a while
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.warn("Max reconnect attempts reached. Will retry in 30 seconds...");
+        setTimeout(() => {
+          this.reconnectAttempts = 0;
+        }, 30000);
+      }
     }
+  }
+
+  private startHealthCheckInterval(): void {
+    // Check health every 15 seconds
+    this.healthCheckInterval = setInterval(() => {
+      if (!this.isApiAvailable && this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.checkApiHealth();
+      }
+    }, 15000);
   }
 
   public async recognizeFace(
     imageDataUrl: string
   ): Promise<FaceRecognitionResponse> {
-    console.log(
-      "Starting face recognition, API available:",
-      this.isApiAvailable
-    );
+    console.log("🔍 Starting face recognition...");
 
-    // Try the API even if initial health check failed; it may have started after page load
+    // Always try a fresh health check before recognition
     if (!this.isApiAvailable) {
-      console.log("API not available, checking health...");
+      console.log("⚡ API not available, performing health check...");
       await this.checkApiHealth();
+      
+      if (!this.isApiAvailable) {
+        console.log("❌ API still not available after health check");
+        return this.mockVerification();
+      }
     }
 
     try {
@@ -108,20 +145,23 @@ export class FaceRecognitionService {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: imageDataUrl }),
-          signal: AbortSignal.timeout(30000),
         }
       );
-      console.log("Sent recognition request to:", `${baseUrl}/recognize`);
-      console.log("Recognition result:", result);
+      console.log("✓ Recognition successful:", `${baseUrl}/recognize`);
+      console.log("📊 Recognition result:", result);
       return result;
-    } catch (error) {
-      console.error("Face recognition API error:", error);
-      // Recheck health in background so the next attempt may work
-      this.checkApiHealth().catch(() => {}); // Don't block on this
+    } catch (error: any) {
+      console.error("❌ Face recognition API error:", error);
+      
+      // Mark API as unavailable and schedule a health check
+      this.isApiAvailable = false;
+      setTimeout(() => this.checkApiHealth(), 2000);
 
-      // Fallback to mock verification
-      console.log("Using mock verification due to API error");
-      return this.mockVerification();
+      // Return mock with detailed error info
+      return {
+        ...this.mockVerification(),
+        reason: `❌ Backend Connection Failed: ${error.message || 'Unknown error'}\n\n🔧 Troubleshooting:\n1. Start Python backend: python start_backend.py\n2. Check if port 5000 is available\n3. Verify face recognition models are loaded`,
+      };
     }
   }
 
@@ -208,20 +248,19 @@ export class FaceRecognitionService {
 
   private mockVerification(): FaceRecognitionResponse {
     // Return mock data when Python API is not available
-    console.warn("Using mock verification - Python backend not reachable");
+    console.warn("⚠️ Using mock verification - Python backend not reachable");
     return {
       matched: false,
-      confidence: 0.3,
-      liveness: 0.8,
+      confidence: 0.0,
+      liveness: 0.0,
       identity: null,
-      reason:
-        "❌ Python Face Recognition API not reachable - Start backend: python simple_backend.py",
-      processing_time: 500,
+      reason: "❌ Python Face Recognition Backend Disconnected",
+      processing_time: 100,
       image_quality: {
-        brightness: 0.75,
-        sharpness: 0.8,
-        face_size: 0.7,
-        angle_quality: 0.75,
+        brightness: 0.0,
+        sharpness: 0.0,
+        face_size: 0.0,
+        angle_quality: 0.0,
       },
     };
   }
