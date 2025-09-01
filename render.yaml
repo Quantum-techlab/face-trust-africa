@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: facetrust-backend
+    env: python
+    buildCommand: pip install -r src/model/requirements.txt
+    startCommand: python src/model/web_interface.py
+    envVars:
+      - key:
