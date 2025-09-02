@@ -1,1 +1,1 @@
-web: python src/model/web_interface.py
+web: gunicorn --bind 0.0.0.0:$PORT src.model.web_interface:app
