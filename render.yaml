@@ -2,7 +2,9 @@ services:
   - type: web
     name: facetrust-backend
     env: python
-    runtime: python-3.10.14 # Explicitly specify Python version
     buildCommand: pip install -r requirements.txt
-    startCommand: python src/model/web_interface.py
+    startCommand: python run_server.py
     plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.14"
