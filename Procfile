@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:$PORT src.model.web_interface:app
+web: cd src/model && gunicorn --bind 0.0.0.0:$PORT web_interface:app

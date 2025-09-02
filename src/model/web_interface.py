@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
-import base64
-import cv2
-import numpy as np
-from face_model import FaceRecognitionModel
+import sys
 import os
-import json
+
+# Add the current directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from face_model import FaceRecognitionModel
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
