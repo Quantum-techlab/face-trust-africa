@@ -200,15 +200,6 @@ def upload_team_member():
     except Exception as e:
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
 
-if __name__ == '__main__':
-    print("Starting FaceTrust AI Face Recognition Server...")
-    print(f"Known team members: {face_model.class_names}")
-    print("Server will be available at:")
-    print("  - http://localhost:5000")
-    print("  - http://127.0.0.1:5000")
-    print("Press Ctrl+C to stop the server")
-    print("-" * 50)
-    
-    # Use PORT from environment if available (for Render compatibility)
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
