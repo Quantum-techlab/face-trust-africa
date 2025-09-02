@@ -1,173 +1,177 @@
 import React, { useState, useEffect } from "react";
-import { faceRecognitionService } from "@/services/faceRecognitionService";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  AlertCircle,
-  CheckCircle,
-  RefreshCw,
-  Server,
-  Users,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle, RefreshCw, Server } from "lucide-react";
+
+interface BackendStatus {
+  isOnline: boolean;
+  responseTime: number | null;
+  lastChecked: Date | null;
+  error: string | null;
+  endpoint: string;
+}
 
 const BackendDiagnostic: React.FC = () => {
-  const [isChecking, setIsChecking] = useState(false);
-  const [status, setStatus] = useState<any>(null);
-  const [teamData, setTeamData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<BackendStatus>({
+    isOnline: false,
+    responseTime: null,
+    lastChecked: null,
+    error: null,
+    endpoint: "https://face-trust-africa-production.up.railway.app/health",
+  });
 
-  const checkConnection = async () => {
+  const [isChecking, setIsChecking] = useState(false);
+
+  const checkBackendHealth = async () => {
     setIsChecking(true);
-    setError(null);
+    const startTime = Date.now();
 
     try {
-      console.log("=== Backend Diagnostic Started ===");
+      const response = await fetch(
+        "https://face-trust-africa-production.up.railway.app/health",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: AbortSignal.timeout(10000),
+        }
+      );
 
-      // Check API availability
-      const apiUrl = faceRecognitionService.getApiUrl();
-      console.log("API URL:", apiUrl);
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
 
-      // Force health check
-      const isAvailable = await faceRecognitionService.forceHealthCheck();
-      console.log("API Available:", isAvailable);
-
-      // Get health status directly
-      const healthResponse = await fetch(`${apiUrl}/health`);
-      if (healthResponse.ok) {
-        const healthData = await healthResponse.json();
-        setStatus(healthData);
-        console.log("Health Data:", healthData);
+      if (response.ok) {
+        const data = await response.json();
+        setStatus({
+          isOnline: true,
+          responseTime,
+          lastChecked: new Date(),
+          error: null,
+          endpoint:
+            "https://face-trust-africa-production.up.railway.app/health",
+        });
       } else {
-        throw new Error(`Health check failed: ${healthResponse.status}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-
-      // Get team data
-      const team = await faceRecognitionService.getTeamMembers();
-      setTeamData(team);
-      console.log("Team Data:", team);
-    } catch (err: any) {
-      console.error("Diagnostic error:", err);
-      setError(err.message);
+    } catch (error) {
+      setStatus({
+        isOnline: false,
+        responseTime: null,
+        lastChecked: new Date(),
+        error: error instanceof Error ? error.message : "Unknown error",
+        endpoint: "https://face-trust-africa-production.up.railway.app/health",
+      });
     } finally {
       setIsChecking(false);
     }
   };
 
   useEffect(() => {
-    checkConnection();
+    checkBackendHealth();
+    const interval = setInterval(checkBackendHealth, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Server className="w-5 h-5" />
-          Backend Connection Diagnostic
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className="w-full">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <span>API URL:</span>
-          <code className="text-sm bg-muted px-2 py-1 rounded">
-            {faceRecognitionService.getApiUrl()}
-          </code>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span>Connection Status:</span>
-          <Badge
-            variant={status?.status === "healthy" ? "default" : "destructive"}
+          <div className="flex items-center gap-2">
+            <Server className="h-5 w-5" />
+            <CardTitle className="text-lg">Backend Status</CardTitle>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={checkBackendHealth}
+            disabled={isChecking}
+            className="h-8"
           >
-            {status?.status === "healthy" ? (
-              <>
-                <CheckCircle className="w-4 h-4 mr-1" /> Connected
-              </>
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isChecking ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
+        <CardDescription>
+          Real-time status of the face recognition backend
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-3 rounded-lg border">
+          <div className="flex items-center gap-3">
+            {status.isOnline ? (
+              <CheckCircle className="h-5 w-5 text-green-600" />
             ) : (
-              <>
-                <AlertCircle className="w-4 h-4 mr-1" /> Disconnected
-              </>
+              <AlertCircle className="h-5 w-5 text-red-600" />
             )}
+            <div>
+              <p className="font-medium">
+                {status.isOnline ? "Connected" : "Disconnected"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Backend API Status
+              </p>
+            </div>
+          </div>
+          <Badge variant={status.isOnline ? "default" : "destructive"}>
+            {status.isOnline ? "Online" : "Offline"}
           </Badge>
         </div>
 
-        {status && (
-          <>
-            <div className="flex items-center justify-between">
-              <span>Model Trained:</span>
-              <Badge variant={status.model_trained ? "default" : "secondary"}>
-                {status.model_trained ? "Yes" : "No"}
-              </Badge>
-            </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Endpoint:</p>
+          <code className="block p-2 bg-muted rounded text-sm break-all">
+            https://face-trust-africa-production.up.railway.app/health
+          </code>
+        </div>
 
-            <div className="flex items-center justify-between">
-              <span>Known Faces:</span>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <Badge variant="outline">{status.known_faces || 0}</Badge>
-              </div>
-            </div>
-
-            {status.team_members && status.team_members.length > 0 && (
-              <div>
-                <span className="font-medium">Team Members:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {status.team_members.map((member: string) => (
-                    <Badge key={member} variant="outline" className="text-xs">
-                      {member}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-            <div className="flex items-center gap-2 text-red-700">
-              <AlertCircle className="w-4 h-4" />
-              <span className="font-medium">Connection Error</span>
-            </div>
-            <p className="text-sm text-red-600 mt-1">{error}</p>
-            <p className="text-xs text-red-500 mt-2">
-              Make sure the backend is running:{" "}
-              <code>python simple_backend.py</code>
-            </p>
+        {status.responseTime && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <span className="text-sm font-medium">Response Time:</span>
+            <Badge variant="outline">{status.responseTime}ms</Badge>
           </div>
         )}
 
-        <Button
-          onClick={checkConnection}
-          disabled={isChecking}
-          className="w-full"
-        >
-          {isChecking ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Checking...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2" /> Recheck Connection
-            </>
-          )}
-        </Button>
+        {status.lastChecked && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+            <span className="text-sm font-medium">Last Checked:</span>
+            <span className="text-sm text-muted-foreground">
+              {status.lastChecked.toLocaleTimeString()}
+            </span>
+          </div>
+        )}
 
-        <div className="text-xs text-muted-foreground">
-          <p>
-            <strong>If you see "0 known faces":</strong>
+        {status.error && (
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                  Connection Error
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                  {status.error}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="pt-2 border-t">
+          <p className="text-xs text-muted-foreground">
+            Troubleshooting: If the backend is offline, check Railway deployment
+            status or try refreshing in a few moments.
           </p>
-          <ul className="list-disc list-inside ml-2 space-y-1">
-            <li>The Python backend is not running</li>
-            <li>
-              Start it with: <code>python simple_backend.py</code>
-            </li>
-            <li>Check that it shows "✓ Model ready with 2 members"</li>
-            <li>
-              Verify browser can reach:{" "}
-              <code>http://localhost:5000/health</code>
-            </li>
-          </ul>
         </div>
       </CardContent>
     </Card>

@@ -14,12 +14,34 @@ export interface FaceRecognitionResponse {
   };
 }
 
-const DEFAULT_BASE_URL = "http://localhost:5000";
+const DEFAULT_BASE_URL = "https://face-trust-africa-production.up.railway.app";
 const CANDIDATE_BASE_URLS = [
-  "http://localhost:5000",
-  "http://127.0.0.1:5000",
-  "http://0.0.0.0:5000"
+  "https://face-trust-africa-production.up.railway.app",
 ];
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  department: string;
+}
+
+export interface TeamResponse {
+  team_members: TeamMember[];
+  total_members: number;
+}
+
+export interface RecognitionResult {
+  matched: boolean;
+  identity?: {
+    name: string;
+    full_name: string;
+    role: string;
+    department: string;
+  };
+  confidence?: number;
+  reason?: string;
+  liveness?: number;
+}
 
 export class FaceRecognitionService {
   private static instance: FaceRecognitionService;
@@ -58,20 +80,22 @@ export class FaceRecognitionService {
         console.log(`Attempting connection to: ${base}${path}`);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
-        
+
         const res = await fetch(`${base}${path}`, {
           ...init,
           signal: controller.signal,
         });
-        
+
         clearTimeout(timeoutId);
-        
+
         if (!res.ok) {
           lastError = new Error(`HTTP ${res.status}: ${res.statusText}`);
-          console.warn(`Failed to connect to ${base}${path}: ${lastError.message}`);
+          console.warn(
+            `Failed to connect to ${base}${path}: ${lastError.message}`
+          );
           continue;
         }
-        
+
         const data = await res.json();
         this.lastGoodBaseUrl = base;
         console.log(`✓ Successfully connected to: ${base}${path}`);
@@ -100,12 +124,17 @@ export class FaceRecognitionService {
       console.log("API Available:", this.isApiAvailable, "Base URL:", baseUrl);
     } catch (error) {
       this.reconnectAttempts++;
-      console.warn(`✗ Face Recognition API not available (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}):`, error);
+      console.warn(
+        `✗ Face Recognition API not available (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}):`,
+        error
+      );
       this.isApiAvailable = false;
-      
+
       // If we've exceeded max attempts, stop trying for a while
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.warn("Max reconnect attempts reached. Will retry in 30 seconds...");
+        console.warn(
+          "Max reconnect attempts reached. Will retry in 30 seconds..."
+        );
         setTimeout(() => {
           this.reconnectAttempts = 0;
         }, 30000);
@@ -116,7 +145,10 @@ export class FaceRecognitionService {
   private startHealthCheckInterval(): void {
     // Check health every 15 seconds
     this.healthCheckInterval = setInterval(() => {
-      if (!this.isApiAvailable && this.reconnectAttempts < this.maxReconnectAttempts) {
+      if (
+        !this.isApiAvailable &&
+        this.reconnectAttempts < this.maxReconnectAttempts
+      ) {
         this.checkApiHealth();
       }
     }, 15000);
@@ -131,7 +163,7 @@ export class FaceRecognitionService {
     if (!this.isApiAvailable) {
       console.log("⚡ API not available, performing health check...");
       await this.checkApiHealth();
-      
+
       if (!this.isApiAvailable) {
         console.log("❌ API still not available after health check");
         return this.mockVerification();
@@ -152,7 +184,7 @@ export class FaceRecognitionService {
       return result;
     } catch (error: any) {
       console.error("❌ Face recognition API error:", error);
-      
+
       // Mark API as unavailable and schedule a health check
       this.isApiAvailable = false;
       setTimeout(() => this.checkApiHealth(), 2000);
@@ -160,7 +192,9 @@ export class FaceRecognitionService {
       // Return mock with detailed error info
       return {
         ...this.mockVerification(),
-        reason: `❌ Backend Connection Failed: ${error.message || 'Unknown error'}\n\n🔧 Troubleshooting:\n1. Start Python backend: python start_backend.py\n2. Check if port 5000 is available\n3. Verify face recognition models are loaded`,
+        reason: `❌ Backend Connection Failed: ${
+          error.message || "Unknown error"
+        }\n\n🔧 Troubleshooting:\n1. Start Python backend: python start_backend.py\n2. Check if port 5000 is available\n3. Verify face recognition models are loaded`,
       };
     }
   }
