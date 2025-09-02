@@ -2,6 +2,10 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import sys
 import os
+import base64
+import numpy as np
+import cv2
+import json
 
 # Add the current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -9,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from face_model import FaceRecognitionModel
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app, origins=["*"])  # Allow all origins for testing
 
 # Initialize face recognition model
 face_model = FaceRecognitionModel()
@@ -46,8 +50,15 @@ def get_team():
         "team_data": face_model.team_data
     })
 
-@app.route('/recognize', methods=['POST'])
+@app.route('/recognize', methods=['POST', 'OPTIONS'])
 def recognize_face():
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    print("=== RECOGNIZE ENDPOINT CALLED ===")
+    print(f"Request method: {request.method}")
+    print(f"Content-Type: {request.headers.get('Content-Type')}")
+    
     try:
         # Check if model is trained
         if not getattr(face_model, 'model_trained', False) or len(face_model.class_names) == 0:
@@ -156,6 +167,7 @@ def recognize_face():
         return jsonify(response)
         
     except Exception as e:
+        print(f"Recognition error: {str(e)}")
         return jsonify({"error": f"Recognition failed: {str(e)}"}), 500
 
 @app.route('/upload_team_member', methods=['POST'])

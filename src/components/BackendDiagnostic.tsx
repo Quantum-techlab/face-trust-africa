@@ -170,7 +170,16 @@ const BackendDiagnostic: React.FC = () => {
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground">
             Troubleshooting: If the backend is offline, check Railway deployment
-            status or try refreshing in a few moments.
+            status at{" "}
+            <a
+              href="https://railway.app/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline ml-1"
+            >
+              Railway Dashboard
+            </a>
+            . Backend URL: https://face-trust-africa-production.up.railway.app
           </p>
         </div>
       </CardContent>
