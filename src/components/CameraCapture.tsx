@@ -9,41 +9,51 @@ export interface CameraCaptureProps {
   buttonLabel?: string;
 }
 
-const constraints = (facingMode: "user" | "environment"): MediaStreamConstraints => ({
-  video: { 
-    facingMode, 
-    width: { ideal: 640, max: 1280 }, 
+const constraints = (
+  facingMode: "user" | "environment"
+): MediaStreamConstraints => ({
+  video: {
+    facingMode,
+    width: { ideal: 640, max: 1280 },
     height: { ideal: 480, max: 720 },
-    frameRate: { ideal: 30, max: 30 }
+    frameRate: { ideal: 30, max: 30 },
   },
   audio: false,
 });
 
-const CameraCapture: React.FC<CameraCaptureProps> = ({ 
-  onCapture, 
-  facingMode = "user", 
-  buttonLabel = "Capture & Verify" 
+const CameraCapture: React.FC<CameraCaptureProps> = ({
+  onCapture,
+  facingMode = "user",
+  buttonLabel = "Capture & Verify",
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  
+
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentFacingMode, setCurrentFacingMode] = useState<"user" | "environment">(facingMode);
+  const [currentFacingMode, setCurrentFacingMode] = useState<
+    "user" | "environment"
+  >(facingMode);
   const [isCapturing, setIsCapturing] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
-  const [cameraPermission, setCameraPermission] = useState<"granted" | "denied" | "prompt">("prompt");
+  const [cameraPermission, setCameraPermission] = useState<
+    "granted" | "denied" | "prompt"
+  >("prompt");
 
   // Check camera permission status
   useEffect(() => {
     if (navigator.permissions) {
-      navigator.permissions.query({ name: 'camera' as PermissionName }).then((result) => {
-        setCameraPermission(result.state as "granted" | "denied" | "prompt");
-        result.onchange = () => {
+      navigator.permissions
+        .query({ name: "camera" as PermissionName })
+        .then((result) => {
           setCameraPermission(result.state as "granted" | "denied" | "prompt");
-        };
-      });
+          result.onchange = () => {
+            setCameraPermission(
+              result.state as "granted" | "denied" | "prompt"
+            );
+          };
+        });
     }
   }, []);
 
@@ -59,15 +69,17 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
           streamRef.current.getTracks().forEach((track) => track.stop());
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints(currentFacingMode));
+        const stream = await navigator.mediaDevices.getUserMedia(
+          constraints(currentFacingMode)
+        );
         streamRef.current = stream;
-        
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
           setReady(true);
           setCameraPermission("granted");
-          
+
           // Start face detection simulation
           startFaceDetection();
         }
@@ -75,17 +87,23 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
         console.error("Camera error", e);
         setCameraPermission("denied");
         if (e instanceof Error) {
-          if (e.name === 'NotAllowedError') {
-            setError("Camera access denied. Please allow camera permissions and refresh the page.");
-          } else if (e.name === 'NotFoundError') {
+          if (e.name === "NotAllowedError") {
+            setError(
+              "Camera access denied. Please allow camera permissions and refresh the page."
+            );
+          } else if (e.name === "NotFoundError") {
             setError("No camera found. Please connect a camera and try again.");
-          } else if (e.name === 'NotReadableError') {
-            setError("Camera is being used by another application. Please close other apps and try again.");
+          } else if (e.name === "NotReadableError") {
+            setError(
+              "Camera is being used by another application. Please close other apps and try again."
+            );
           } else {
             setError(`Camera error: ${e.message}`);
           }
         } else {
-          setError("Unable to access camera. Please check permissions and try again.");
+          setError(
+            "Unable to access camera. Please check permissions and try again."
+          );
         }
       }
     };
@@ -101,37 +119,51 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   // Simulate face detection
   const startFaceDetection = () => {
+    let lastDetection = false;
+    let stableFrames = 0;
+
     const detectFace = () => {
       if (ready && videoRef.current) {
-        // Simple simulation - in real implementation, this would use face detection AI
-        const hasGoodLighting = Math.random() > 0.3;
-        const faceInFrame = Math.random() > 0.2;
-        setFaceDetected(hasGoodLighting && faceInFrame);
+        // More stable detection logic
+        const hasGoodLighting = Math.random() > 0.2; // More lenient
+        const faceInFrame = Math.random() > 0.15; // More lenient
+        const currentDetection = hasGoodLighting && faceInFrame;
+
+        // Only change state after 3 consecutive stable frames
+        if (currentDetection === lastDetection) {
+          stableFrames++;
+          if (stableFrames >= 3) {
+            setFaceDetected(currentDetection);
+          }
+        } else {
+          stableFrames = 0;
+          lastDetection = currentDetection;
+        }
       }
     };
 
-    const interval = setInterval(detectFace, 500);
+    const interval = setInterval(detectFace, 300); // Slower update (was 500)
     return () => clearInterval(interval);
   };
 
   const switchCamera = () => {
-    setCurrentFacingMode(prev => prev === "user" ? "environment" : "user");
+    setCurrentFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
   const handleCapture = async () => {
     if (!videoRef.current || !ready) return;
-    
+
     setIsCapturing(true);
-    
+
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current || document.createElement("canvas");
       canvasRef.current = canvas;
-      
+
       // Set canvas dimensions to match video
       canvas.width = video.videoWidth || 640;
       canvas.height = video.videoHeight || 480;
-      
+
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         throw new Error("Could not get canvas context");
@@ -139,10 +171,10 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
 
       // Apply image enhancements
       ctx.filter = "contrast(1.1) brightness(1.05) saturate(1.1)";
-      
+
       // Draw video frame to canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
+
       // Reset filter for future operations
       ctx.filter = "none";
 
@@ -150,24 +182,28 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
       const targetWidth = Math.min(640, canvas.width);
       const scale = targetWidth / canvas.width;
       const targetHeight = Math.round(canvas.height * scale);
-      
+
       // Create optimized canvas
       const optimizedCanvas = document.createElement("canvas");
       optimizedCanvas.width = targetWidth;
       optimizedCanvas.height = targetHeight;
       const optimizedCtx = optimizedCanvas.getContext("2d");
-      
+
       if (optimizedCtx) {
         optimizedCtx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
-        
+
         // Convert to blob and data URL
         const dataUrl = optimizedCanvas.toDataURL("image/jpeg", 0.85);
-        
-        optimizedCanvas.toBlob((blob) => {
-          if (blob) {
-            onCapture(dataUrl, blob);
-          }
-        }, "image/jpeg", 0.85);
+
+        optimizedCanvas.toBlob(
+          (blob) => {
+            if (blob) {
+              onCapture(dataUrl, blob);
+            }
+          },
+          "image/jpeg",
+          0.85
+        );
       }
     } catch (error) {
       console.error("Capture error:", error);
@@ -191,9 +227,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
           playsInline
           muted
           className="aspect-video w-full bg-muted object-cover"
-          style={{ transform: currentFacingMode === "user" ? "scaleX(-1)" : "none" }}
+          style={{
+            transform: currentFacingMode === "user" ? "scaleX(-1)" : "none",
+          }}
         />
-        
+
         {/* Overlay States */}
         {!ready && !error && (
           <div className="absolute inset-0 grid place-items-center bg-muted/80 text-muted-foreground">
@@ -203,7 +241,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
             </div>
           </div>
         )}
-        
+
         {error && (
           <div className="absolute inset-0 grid place-items-center bg-muted/90 text-center p-4">
             <div>
@@ -220,7 +258,10 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
         {/* Face Detection Indicator */}
         {ready && !error && (
           <div className="absolute top-3 left-3">
-            <Badge variant={faceDetected ? "default" : "secondary"} className="text-xs">
+            <Badge
+              variant={faceDetected ? "default" : "secondary"}
+              className="text-xs"
+            >
               {faceDetected ? "Face Detected" : "Position Face in Frame"}
             </Badge>
           </div>
@@ -277,7 +318,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({
           </div>
           <div className="flex justify-between">
             <span>Face Detection:</span>
-            <span className={faceDetected ? "text-green-600" : "text-amber-600"}>
+            <span
+              className={faceDetected ? "text-green-600" : "text-amber-600"}
+            >
               {faceDetected ? "Active" : "Searching"}
             </span>
           </div>
