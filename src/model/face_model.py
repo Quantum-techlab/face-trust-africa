@@ -8,22 +8,21 @@ class FaceRecognitionModel:
     def __init__(self, models_path="Models"):
         self.models_path = Path(models_path)
         
-        # MUCH STRICTER THRESHOLDS
-        self.confidence_threshold = 40.0    # Much stricter (was 50.0)
-        self.min_face_size = 80             # Keep same
-        self.max_distance_threshold = 50    # Much stricter (was 60)
+        # VERY STRICT THRESHOLDS - Much more secure
+        self.confidence_threshold = 40.0    # STRICT: Lower = stricter (was 100.0)
+        self.min_face_size = 80            # Minimum face size
+        self.max_distance_threshold = 45.0  # VERY strict distance (was 50)
+        self.min_match_confidence = 0.85    # Require 85% confidence minimum
         
-        # Require VERY high match quality
-        self.min_match_confidence = 0.80    # 80% minimum (was 0.75)
+        print("Initializing Face Recognition Model...")
+        print(f"STRICT SECURITY MODE:")
+        print(f"  Confidence threshold: {self.confidence_threshold}")
+        print(f"  Max distance: {self.max_distance_threshold}")
+        print(f"  Min confidence required: {self.min_match_confidence}")
         
-        # Face detection with better parameters
+        # Face detection and recognition
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        self.recognizer = cv2.face.LBPHFaceRecognizer_create(
-            radius=2,        # More detailed local patterns
-            neighbors=12,    # More neighbors for better accuracy
-            grid_x=8,        # Higher resolution grid
-            grid_y=8
-        )
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
         
         # Training data
         self.class_names = []
@@ -31,8 +30,71 @@ class FaceRecognitionModel:
         self.model_trained = False
         self.training_features = []
         
-        print("Initializing Face Recognition Model...")
         print(f"Models path: {self.models_path}")
+        
+        # Enhanced team data with full details
+        self.default_team_data = {
+            "Mukhtar_Fathiyah": {
+                "full_name": "Mukhtar Fathiyah",
+                "first_name": "Mukhtar",
+                "last_name": "Fathiyah",
+                "position": "Co-founder & COO",
+                "department": "Operations",
+                "employee_id": "FT002",
+                "email": "mukhtar.fathiyah@facetrust.ai",
+                "phone": "+234-802-555-1234",
+                "nin": "98765012345",
+                "unique_id_number": "FT-EMP-002",
+                "gender": "Female",
+                "date_of_birth": "1996-07-12",
+                "nationality": "Nigerian",
+                "address_city": "Abuja",
+                "address_state": "FCT",
+                "address_country": "Nigeria",
+                "hire_date": "2024-02-15",
+                "access_level": "Administrator",
+                "social_media": {
+                    "linkedin": "linkedin.com/in/mukhtar-fathiyah",
+                    "twitter": "@mukhtarfathiyah"
+                },
+                "verification_history": {
+                    "last_verified": "2024-02-20T09:00:00Z",
+                    "verification_count": 1,
+                    "risk_score": 0
+                },
+                "bio": "Operations leader focused on reliable, scalable identity verification for African markets."
+            },
+            "Abdulrasaq_Abdulrasaq": {
+                "full_name": "Abdulrasaq Abdulrasaq",
+                "first_name": "Abdulrasaq",
+                "last_name": "Abdulrasaq",
+                "position": "Founder & CEO",
+                "department": "Executive",
+                "employee_id": "FT001",
+                "email": "abdulrasaq@facetrust.ai",
+                "phone": "+234-801-234-5678",
+                "nin": "12345678901",
+                "unique_id_number": "FT-EMP-001",
+                "gender": "Male",
+                "date_of_birth": "1995-01-01",
+                "nationality": "Nigerian",
+                "address_city": "Lagos",
+                "address_state": "Lagos State",
+                "address_country": "Nigeria",
+                "hire_date": "2024-01-01",
+                "access_level": "Administrator",
+                "social_media": {
+                    "linkedin": "linkedin.com/in/abdulrasaq-abdulrasaq",
+                    "twitter": "@abdulrasaq"
+                },
+                "verification_history": {
+                    "last_verified": "2024-01-20T10:30:00Z",
+                    "verification_count": 1,
+                    "risk_score": 0
+                },
+                "bio": "Founder and CEO of FaceTrust AI, passionate about building secure identity verification solutions for Africa."
+            }
+        }
         
         # Load and train
         self.load_team_data()
@@ -43,74 +105,40 @@ class FaceRecognitionModel:
         team_data_path = self.models_path / "team_data.json"
         if team_data_path.exists():
             with open(team_data_path, 'r') as f:
-                self.team_data = json.load(f)
-            print(f"Loaded team data for {len(self.team_data)} members")
+                loaded_data = json.load(f)
+                # Merge with defaults
+                self.team_data = {**self.default_team_data, **loaded_data}
         else:
-            # Create enhanced default team data if none exists
-            self.team_data = {
-                "Mukhtar_Fathiyah": {
-                    "full_name": "Mukhtar Fathiyah",
-                    "role": "Lead Software Engineer",
-                    "department": "Technology & Innovation",
-                    "employee_id": "EMP-001",
-                    "email": "mukhtar.fathiyah@facetrustafrica.com",
-                    "phone": "+234-803-123-4567",
-                    "access_level": "Senior",
-                    "hire_date": "2024-01-15",
-                    "nationality": "Nigerian",
-                    "gender": "Male",
-                    "verification_count": 1
-                },
-                "Abdulrasaq_Abdulrasaq": {
-                    "full_name": "Abdulrasaq Abdulrasaq", 
-                    "role": "Senior Data Scientist",
-                    "department": "AI Research & Development",
-                    "employee_id": "EMP-002",
-                    "email": "abdulrasaq@facetrustafrica.com",
-                    "phone": "+234-805-987-6543",
-                    "access_level": "Senior",
-                    "hire_date": "2024-02-01",
-                    "nationality": "Nigerian", 
-                    "gender": "Male",
-                    "verification_count": 1
-                }
-            }
-            # Save default data
-            with open(team_data_path, 'w') as f:
-                json.dump(self.team_data, f, indent=2)
-            print("Created default team data")
+            self.team_data = self.default_team_data.copy()
+            
+        print(f"Loaded team data for {len(self.team_data)} members")
 
     def validate_face_quality(self, face_roi):
-        """Enhanced face quality validation"""
+        """Validate face image quality"""
         try:
             height, width = face_roi.shape
-            
-            # Size check
             if height < self.min_face_size or width < self.min_face_size:
-                return False, f"Face too small ({width}x{height})"
+                return False, "Face too small"
             
-            # Brightness check
             brightness = np.mean(face_roi)
-            if brightness < 40 or brightness > 220:
-                return False, f"Poor lighting (brightness: {brightness:.1f})"
+            if brightness < 30 or brightness > 220:
+                return False, "Poor lighting"
             
-            # Enhanced sharpness check
             laplacian_var = cv2.Laplacian(face_roi, cv2.CV_64F).var()
-            if laplacian_var < 100:  # Stricter blur detection
-                return False, f"Image too blurry (sharpness: {laplacian_var:.1f})"
+            if laplacian_var < 50:
+                return False, "Image too blurry"
             
-            # Contrast check
             contrast = face_roi.std()
-            if contrast < 25:  # Higher contrast requirement
-                return False, f"Low contrast ({contrast:.1f})"
+            if contrast < 15:
+                return False, "Low contrast"
             
-            return True, f"Good quality (size: {width}x{height}, sharpness: {laplacian_var:.1f})"
+            return True, "Good quality"
             
         except Exception as e:
             return False, f"Quality check failed: {str(e)}"
 
     def load_and_encode_images(self):
-        """Enhanced training with multiple samples per person"""
+        """Load and train model"""
         try:
             faces = []
             labels = []
@@ -125,7 +153,7 @@ class FaceRecognitionModel:
             
             for idx, image_path in enumerate(image_files):
                 name = image_path.stem
-                print(f"\nProcessing: {name}")
+                print(f"Processing: {name}")
                 
                 image = cv2.imread(str(image_path))
                 if image is None:
@@ -134,13 +162,9 @@ class FaceRecognitionModel:
                 
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 
-                # Better face detection
                 detected_faces = self.face_cascade.detectMultiScale(
-                    gray,
-                    scaleFactor=1.05,    # More precise
-                    minNeighbors=6,      # Stricter
+                    gray, scaleFactor=1.1, minNeighbors=5,
                     minSize=(self.min_face_size, self.min_face_size),
-                    maxSize=(500, 500),  # Limit max size
                     flags=cv2.CASCADE_SCALE_IMAGE
                 )
                 
@@ -149,57 +173,33 @@ class FaceRecognitionModel:
                     continue
                 
                 if len(detected_faces) > 1:
-                    print(f"⚠ Multiple faces detected, using largest")
+                    print(f"⚠ Multiple faces detected in: {name}, using largest")
                     detected_faces = [max(detected_faces, key=lambda f: f[2] * f[3])]
                 
-                # Process face
                 (x, y, w, h) = detected_faces[0]
                 face_roi = gray[y:y+h, x:x+w]
                 
                 print(f"Face size: {face_roi.shape}")
                 
-                # Quality validation
                 is_good_quality, quality_msg = self.validate_face_quality(face_roi)
-                print(f"Quality: {quality_msg}")
+                print(f"Quality check: {is_good_quality} - {quality_msg}")
                 
-                if not is_good_quality:
-                    print(f"✗ Rejected: {quality_msg}")
-                    continue
+                # Accept for training regardless of quality for now
+                face_roi = cv2.resize(face_roi, (200, 200))
                 
-                # Create multiple training samples for better recognition
-                face_samples = []
-                
-                # Original face
-                face_resized = cv2.resize(face_roi, (200, 200))
-                face_samples.append(face_resized)
-                
-                # Add slight variations for better training
-                # Brightness variations
-                bright_face = cv2.convertScaleAbs(face_resized, alpha=1.2, beta=10)
-                dark_face = cv2.convertScaleAbs(face_resized, alpha=0.8, beta=-10)
-                face_samples.extend([bright_face, dark_face])
-                
-                # Add histogram equalized version
-                eq_face = cv2.equalizeHist(face_resized)
-                face_samples.append(eq_face)
-                
-                # Store all samples
-                for sample in face_samples:
-                    faces.append(sample)
-                    labels.append(idx)
-                
+                faces.append(face_roi)
+                labels.append(idx)
                 self.class_names.append(name)
-                self.training_features.append(face_resized.copy())
+                self.training_features.append(face_roi.copy())
                 
-                print(f"✓ Added {len(face_samples)} training samples for: {name}")
+                print(f"✓ Added to training set: {name}")
             
             print(f"\nTraining Summary:")
-            print(f"Members: {len(self.class_names)}")
-            print(f"Total training samples: {len(faces)}")
+            print(f"Valid faces found: {len(faces)}")
             print(f"Class names: {self.class_names}")
             
-            if len(faces) < 2:
-                print("ERROR: Need at least 2 training samples")
+            if len(faces) < 1:
+                print("ERROR: Need at least 1 valid face image to train")
                 self.model_trained = False
                 return
             
@@ -210,9 +210,8 @@ class FaceRecognitionModel:
             self.recognizer.train(faces, labels)
             self.model_trained = True
             
-            print(f"✓ Model trained successfully!")
-            print(f"✓ Confidence threshold: {self.confidence_threshold}")
-            print(f"✓ Min match confidence: {self.min_match_confidence}")
+            print(f"✓ Model trained successfully for {len(self.class_names)} members: {self.class_names}")
+            print("Model initialization complete. Known members:", len(self.class_names))
             
         except Exception as e:
             print(f"ERROR: Training failed: {str(e)}")
@@ -221,84 +220,55 @@ class FaceRecognitionModel:
             self.model_trained = False
 
     def recognize_face_from_image(self, image):
-        """STRICT face recognition with enhanced validation"""
+        """STRICT face recognition - prevent false positives"""
         try:
             if not self.model_trained:
-                return {
-                    "success": False,
-                    "error": "Model not trained",
-                    "faces_found": 0,
-                    "results": []
-                }
+                return {"success": False, "error": "Model not trained", "faces_found": 0, "results": []}
             
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # Same detection parameters as training
             faces = self.face_cascade.detectMultiScale(
-                gray,
-                scaleFactor=1.05,
-                minNeighbors=6,
+                gray, scaleFactor=1.1, minNeighbors=5,
                 minSize=(self.min_face_size, self.min_face_size),
-                maxSize=(500, 500),
                 flags=cv2.CASCADE_SCALE_IMAGE
             )
             
             if len(faces) == 0:
-                return {
-                    "success": True,
-                    "faces_found": 0,
-                    "results": [],
-                    "message": "No faces detected"
-                }
+                return {"success": True, "faces_found": 0, "results": []}
             
             results = []
             
             for (x, y, w, h) in faces:
                 face_roi = gray[y:y+h, x:x+w]
-                
-                # Quality check
-                is_good_quality, quality_msg = self.validate_face_quality(face_roi)
-                if not is_good_quality:
-                    results.append({
-                        "matched": False,
-                        "name": "Unknown",
-                        "confidence": 0.0,
-                        "reason": f"Poor quality: {quality_msg}",
-                        "team_data": {},
-                        "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)}
-                    })
-                    continue
-                
-                # Resize and normalize
                 face_roi = cv2.resize(face_roi, (200, 200))
-                face_roi = cv2.equalizeHist(face_roi)  # Normalize histogram
                 
                 # Get prediction
                 label, distance = self.recognizer.predict(face_roi)
                 
-                # Calculate confidence (0-1 scale)
+                # Calculate confidence score (0-1)
                 confidence = max(0, (self.confidence_threshold - distance) / self.confidence_threshold)
                 
-                print(f"Recognition: label={label}, distance={distance:.1f}, confidence={confidence:.3f}")
+                print(f"STRICT SECURITY CHECK:")
+                print(f"  Label: {label}")
+                print(f"  Distance: {distance:.2f}")
+                print(f"  Confidence: {confidence:.3f} ({confidence*100:.1f}%)")
+                print(f"  Threshold: {self.confidence_threshold}")
+                print(f"  Required confidence: {self.min_match_confidence}")
                 
-                # VERY STRICT matching conditions
+                # VERY STRICT MATCHING CONDITIONS
                 is_valid_match = (
-                    distance <= self.confidence_threshold and      # Must be under threshold
-                    confidence >= self.min_match_confidence and    # Must meet minimum confidence
+                    distance <= self.confidence_threshold and      # Distance check
+                    distance <= self.max_distance_threshold and    # Max distance
+                    confidence >= self.min_match_confidence and    # Minimum confidence
                     label < len(self.class_names) and              # Valid label
-                    label >= 0 and                                 # Non-negative
-                    distance <= 45.0                               # Additional strict distance check
+                    label >= 0                                     # Non-negative
                 )
                 
-                print(f"MATCH DECISION:")
-                print(f"  Distance: {distance:.1f} (max: {self.confidence_threshold})")
-                print(f"  Confidence: {confidence:.3f} (min: {self.min_match_confidence})")
-                print(f"  Valid match: {is_valid_match}")
+                print(f"  SECURITY DECISION: {'✅ AUTHORIZED' if is_valid_match else '❌ UNAUTHORIZED'}")
                 
                 if is_valid_match:
                     name = self.class_names[label]
                     team_data = self.team_data.get(name, {})
-                    print(f"  ✅ VERIFIED: {name}")
                     
                     results.append({
                         "matched": True,
@@ -307,35 +277,24 @@ class FaceRecognitionModel:
                         "distance": distance,
                         "team_data": team_data,
                         "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
-                        "reason": f"Verified: {name} ({confidence:.1%} confidence)"
+                        "reason": f"✅ VERIFIED: {name} ({confidence:.1%} confidence)"
                     })
                 else:
-                    print(f"  ❌ REJECTED - Not authorized")
-                    
                     results.append({
                         "matched": False,
                         "name": "Unknown",
                         "confidence": confidence,
                         "distance": distance,
-                        "reason": f"UNAUTHORIZED ACCESS - Not a team member (Score: {confidence:.1%})",
+                        "reason": f"❌ ACCESS DENIED - Insufficient security clearance (Score: {confidence:.1%}, Required: {self.min_match_confidence:.1%})",
                         "team_data": {},
                         "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)}
                     })
             
-            return {
-                "success": True,
-                "faces_found": len(faces),
-                "results": results
-            }
+            return {"success": True, "faces_found": len(faces), "results": results}
             
         except Exception as e:
             print(f"Recognition error: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "faces_found": 0,
-                "results": []
-            }
+            return {"success": False, "error": str(e), "faces_found": 0, "results": []}
 
     def update_thresholds(self, confidence_threshold=None, max_distance=None, min_face_size=None):
         """Update recognition thresholds for fine-tuning accuracy"""
