@@ -55,120 +55,136 @@ def recognize_face():
     if request.method == 'OPTIONS':
         return '', 200
     
-    print("=== RECOGNIZE ENDPOINT CALLED ===")
-    print(f"Request method: {request.method}")
-    print(f"Content-Type: {request.headers.get('Content-Type')}")
+    print("=== STRICT FACE RECOGNITION STARTED ===")
     
     try:
-        # Check if model is trained
-        if not getattr(face_model, 'model_trained', False) or len(face_model.class_names) == 0:
+        if not getattr(face_model, 'model_trained', False):
             return jsonify({
-                "error": "Model not trained or no known faces available",
-                "model_trained": getattr(face_model, 'model_trained', False),
-                "known_faces": len(face_model.class_names)
-            }), 400
-        
-        data = request.get_json()
-        
-        if 'image' not in data:
-            return jsonify({"error": "No image data provided"}), 400
-        
-        # Decode base64 image
-        image_data = data['image']
-        if image_data.startswith('data:image'):
-            # Remove data URL prefix
-            image_data = image_data.split(',')[1]
-        
-        # Convert base64 to numpy array
-        image_bytes = base64.b64decode(image_data)
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if img is None:
-            return jsonify({"error": "Could not decode image"}), 400
-        
-        # Recognize face
-        result = face_model.recognize_face_from_image(img)
-        
-        # Format response for frontend
-        if result.get("success") and result.get("faces_found", 0) > 0:
-            face_result = result["results"][0]  # Take first face
-            
-            if face_result["matched"]:
-                team_data = face_result["team_data"]
-                
-                # Format response to match existing VerificationResponse interface
-                response = {
-                    "matched": True,
-                    "confidence": face_result["confidence"],
-                    "liveness": 0.95,  # Assume high liveness for team members
-                    "identity": {
-                        "full_name": team_data.get("full_name", face_result["name"]),
-                        "first_name": team_data.get("first_name", ""),
-                        "last_name": team_data.get("last_name", ""),
-                        "employee_id": team_data.get("employee_id", ""),
-                        "position": team_data.get("position", ""),
-                        "department": team_data.get("department", ""),
-                        "email": team_data.get("email", ""),
-                        "phone": team_data.get("phone", ""),
-                        "nin": team_data.get("nin", ""),
-                        "unique_id_number": team_data.get("unique_id_number", ""),
-                        "gender": team_data.get("gender", ""),
-                        "date_of_birth": team_data.get("date_of_birth", ""),
-                        "nationality": team_data.get("nationality", ""),
-                        "address_city": team_data.get("address_city", ""),
-                        "address_state": team_data.get("address_state", ""),
-                        "address_country": team_data.get("address_country", ""),
-                        "access_level": team_data.get("access_level", ""),
-                        "hire_date": team_data.get("hire_date", ""),
-                        "social_media": team_data.get("social_media", {}),
-                        "verification_history": team_data.get("verification_history", {}),
-                        "bio": team_data.get("bio", "")
-                    },
-                    "processing_time": 800,
-                    "image_quality": {
-                        "brightness": 0.85,
-                        "sharpness": 0.90,
-                        "face_size": 0.80,
-                        "angle_quality": 0.85
-                    }
-                }
-            else:
-                response = {
-                    "matched": False,
-                    "confidence": face_result["confidence"],
-                    "liveness": 0.75,
-                    "identity": None,
-                    "reason": "Face not recognized as team member",
-                    "processing_time": 800,
-                    "image_quality": {
-                        "brightness": 0.75,
-                        "sharpness": 0.80,
-                        "face_size": 0.70,
-                        "angle_quality": 0.75
-                    }
-                }
-        else:
-            response = {
                 "matched": False,
                 "confidence": 0.0,
-                "liveness": 0.60,
+                "reason": "Face recognition system not initialized",
                 "identity": None,
+                "system_status": "Model not trained"
+            })
+        
+        data = request.get_json()
+        if 'image' not in data:
+            return jsonify({
+                "matched": False,
+                "confidence": 0.0,
+                "reason": "No image provided",
+                "identity": None
+            }), 400
+        
+        # Decode image
+        image_data = data['image']
+        if image_data.startswith('data:image'):
+            image_data = image_data.split(',')[1]
+        
+        try:
+            image_bytes = base64.b64decode(image_data)
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        except Exception as e:
+            return jsonify({
+                "matched": False,
+                "confidence": 0.0,
+                "reason": "Invalid image format",
+                "identity": None
+            }), 400
+        
+        if img is None:
+            return jsonify({
+                "matched": False,
+                "confidence": 0.0,
+                "reason": "Could not decode image data",
+                "identity": None
+            }), 400
+        
+        # Recognize with strict validation
+        result = face_model.recognize_face_from_image(img)
+        
+        print(f"Recognition result: {result}")
+        
+        if not result.get("success"):
+            return jsonify({
+                "matched": False,
+                "confidence": 0.0,
+                "reason": result.get("error", "Recognition failed"),
+                "identity": None
+            })
+        
+        if result.get("faces_found", 0) == 0:
+            return jsonify({
+                "matched": False,
+                "confidence": 0.0,
+                "liveness": 0.1,  # Very low liveness if no face
                 "reason": "No face detected in image",
-                "processing_time": 500,
-                "image_quality": {
-                    "brightness": 0.60,
-                    "sharpness": 0.65,
-                    "face_size": 0.30,
-                    "angle_quality": 0.50
+                "identity": None,
+                "processing_time": 300
+            })
+        
+        # Process first face result
+        face_result = result["results"][0]
+        
+        if face_result["matched"]:
+            # VERIFIED TEAM MEMBER
+            team_data = face_result["team_data"]
+            confidence_percentage = round(face_result["confidence"] * 100, 1)
+            
+            response = {
+                "matched": True,
+                "confidence": face_result["confidence"],
+                "confidence_percentage": confidence_percentage,
+                "liveness": 0.95,  # High liveness for verified members
+                "identity": {
+                    "full_name": team_data.get("full_name", face_result["name"]),
+                    "name": face_result["name"],
+                    "role": team_data.get("role", "Team Member"),
+                    "department": team_data.get("department", ""),
+                    "employee_id": team_data.get("employee_id", ""),
+                    "verification_level": "VERIFIED",
+                    "match_quality": "HIGH" if face_result["confidence"] > 0.8 else "MEDIUM"
+                },
+                "reason": f"✓ Verified team member: {face_result['name']} ({confidence_percentage}% match)",
+                "processing_time": 850,
+                "technical_details": {
+                    "distance": face_result.get("distance", 0),
+                    "similarity": face_result.get("similarity", 0),
+                    "algorithm": "LBPH"
+                }
+            }
+        else:
+            # NOT A TEAM MEMBER
+            confidence_percentage = round(face_result["confidence"] * 100, 1) if face_result["confidence"] else 0
+            
+            response = {
+                "matched": False,
+                "confidence": face_result["confidence"],
+                "confidence_percentage": confidence_percentage,
+                "liveness": 0.75,  # Medium liveness for detected but unrecognized faces
+                "identity": None,
+                "reason": f"✗ {face_result.get('reason', 'Person not in authorized database')}",
+                "processing_time": 650,
+                "security_note": "Access denied - unauthorized individual",
+                "technical_details": {
+                    "distance": face_result.get("distance", 999),
+                    "faces_detected": result.get("faces_found", 0),
+                    "algorithm": "LBPH"
                 }
             }
         
         return jsonify(response)
         
     except Exception as e:
-        print(f"Recognition error: {str(e)}")
-        return jsonify({"error": f"Recognition failed: {str(e)}"}), 500
+        print(f"RECOGNITION ERROR: {str(e)}")
+        return jsonify({
+            "matched": False,
+            "confidence": 0.0,
+            "reason": "System error during recognition",
+            "identity": None,
+            "error_details": str(e) if app.debug else "Contact administrator"
+        }), 500
 
 @app.route('/upload_team_member', methods=['POST'])
 def upload_team_member():
@@ -212,6 +228,31 @@ def upload_team_member():
         
     except Exception as e:
         return jsonify({"error": f"Upload failed: {str(e)}"}), 500
+
+@app.route('/system/thresholds', methods=['POST'])
+def update_thresholds():
+    """Update recognition thresholds for fine-tuning"""
+    try:
+        data = request.get_json()
+        
+        confidence_threshold = data.get('confidence_threshold')
+        max_distance = data.get('max_distance')
+        min_face_size = data.get('min_face_size')
+        
+        face_model.update_thresholds(confidence_threshold, max_distance, min_face_size)
+        
+        return jsonify({
+            "success": True,
+            "message": "Thresholds updated successfully",
+            "current_thresholds": {
+                "confidence_threshold": face_model.confidence_threshold,
+                "max_distance_threshold": face_model.max_distance_threshold,
+                "min_face_size": face_model.min_face_size
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

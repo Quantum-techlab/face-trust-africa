@@ -1,281 +1,290 @@
 import cv2
-from typing import List, Tuple
-import numpy as np
 import os
-import imutils
+import numpy as np
 import json
-from datetime import datetime
+from pathlib import Path
+import imutils
 
 class FaceRecognitionModel:
-    def __init__(self, models_path=None):
-        # Resolve Models directory relative to this file to avoid CWD issues
-        self.models_path = models_path or os.path.join(os.path.dirname(__file__), "Models")
-        self.images = []
+    def __init__(self, models_path="Models"):
+        self.models_path = Path(models_path)
+        
+        # STRICT THRESHOLDS - Adjust these for accuracy vs false positives
+        self.confidence_threshold = 50.0  # LBPH: Lower = stricter (0-150 range)
+        self.min_face_size = 80           # Minimum face size in pixels
+        self.max_distance_threshold = 80  # Maximum allowed distance for match
+        
+        # Face detection and recognition
+        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
+        
+        # Training data
         self.class_names = []
-        self.encode_list_known = []
         self.team_data = {}
-        self.recognizer = None
         self.model_trained = False
+        self.training_features = []  # Store training face features for validation
         
-        print(f"Initializing Face Recognition Model...")
-        print(f"Models path: {self.models_path}")
-        
-        # Initialize components
+        # Load and train
         self.load_team_data()
         self.load_and_encode_images()
-        
-        print(f"Model initialization complete. Known members: {len(self.class_names)}")
-    
-    def load_team_data(self):
-        """Load team member data from JSON file"""
-        team_data_path = os.path.join(self.models_path, 'team_data.json')
-        try:
-            if os.path.exists(team_data_path):
-                with open(team_data_path, 'r') as f:
-                    self.team_data = json.load(f)
-                print(f"Loaded team data for {len(self.team_data)} members")
-            else:
-                print("Team data file not found. Creating default structure.")
-                self.team_data = {}
-        except Exception as e:
-            print(f"Error loading team data: {e}")
-            self.team_data = {}
-    
-    def load_and_encode_images(self):
-        """Load images from Models folder and encode them"""
-        # Reset state before (re)loading to avoid duplicates
-        self.images = []
-        self.class_names = []
-        self.encode_list_known = []
-        self.model_trained = False
 
-        if not os.path.exists(self.models_path):
-            print(f"ERROR: Models folder '{self.models_path}' not found!")
-            os.makedirs(self.models_path, exist_ok=True)
-            print(f"Created models directory: {self.models_path}")
-            return
-            
+    def load_team_data(self):
+        """Load team member data"""
+        team_data_path = self.models_path / "team_data.json"
+        if team_data_path.exists():
+            with open(team_data_path, 'r') as f:
+                self.team_data = json.load(f)
+            print(f"Loaded team data for {len(self.team_data)} members")
+
+    def validate_face_quality(self, face_roi):
+        """Validate if face image quality is good enough for recognition"""
         try:
-            mylist = os.listdir(self.models_path)
-            image_files = [f for f in mylist if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            # Check face size
+            height, width = face_roi.shape
+            if height < self.min_face_size or width < self.min_face_size:
+                return False, "Face too small"
             
-            print(f"Found {len(image_files)} image files in models directory")
+            # Check image brightness
+            brightness = np.mean(face_roi)
+            if brightness < 50 or brightness > 200:
+                return False, "Poor lighting conditions"
             
-            if len(image_files) == 0:
-                print("WARNING: No image files found in models directory!")
+            # Check image sharpness (using Laplacian variance)
+            laplacian_var = cv2.Laplacian(face_roi, cv2.CV_64F).var()
+            if laplacian_var < 100:  # Threshold for blur detection
+                return False, "Image too blurry"
+            
+            # Check contrast
+            contrast = face_roi.std()
+            if contrast < 20:
+                return False, "Low contrast image"
+            
+            return True, "Good quality"
+            
+        except Exception as e:
+            return False, f"Quality check failed: {str(e)}"
+
+    def load_and_encode_images(self):
+        """Load and train model with STRICT validation"""
+        try:
+            faces = []
+            labels = []
+            self.class_names = []
+            self.training_features = []
+            
+            image_files = list(self.models_path.glob("*.jpg")) + \
+                         list(self.models_path.glob("*.jpeg")) + \
+                         list(self.models_path.glob("*.png"))
+            
+            print(f"Found {len(image_files)} image files")
+            
+            for idx, image_path in enumerate(image_files):
+                name = image_path.stem
+                print(f"Processing: {name}")
+                
+                image = cv2.imread(str(image_path))
+                if image is None:
+                    print(f"✗ Could not load: {name}")
+                    continue
+                
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                
+                # Detect faces with strict parameters
+                detected_faces = self.face_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.05,  # More strict
+                    minNeighbors=6,    # More strict
+                    minSize=(self.min_face_size, self.min_face_size),
+                    flags=cv2.CASCADE_SCALE_IMAGE
+                )
+                
+                if len(detected_faces) == 0:
+                    print(f"✗ No face detected in: {name}")
+                    continue
+                
+                if len(detected_faces) > 1:
+                    print(f"⚠ Multiple faces detected in: {name}, using largest")
+                    detected_faces = [max(detected_faces, key=lambda f: f[2] * f[3])]
+                
+                # Extract and validate face
+                (x, y, w, h) = detected_faces[0]
+                face_roi = gray[y:y+h, x:x+w]
+                
+                # Quality validation
+                is_good_quality, quality_msg = self.validate_face_quality(face_roi)
+                if not is_good_quality:
+                    print(f"✗ Poor quality ({quality_msg}): {name}")
+                    continue
+                
+                # Standardize face size
+                face_roi = cv2.resize(face_roi, (200, 200))
+                
+                # Store training data
+                faces.append(face_roi)
+                labels.append(idx)
+                self.class_names.append(name)
+                self.training_features.append(face_roi.copy())
+                
+                print(f"✓ Added to training set: {name}")
+            
+            if len(faces) < 2:
+                print("ERROR: Need at least 2 valid face images to train")
                 return
             
-            for cls in image_files:
-                try:
-                    image_path = os.path.join(self.models_path, cls)
-                    curnt_img = cv2.imread(image_path)
-                    if curnt_img is not None:
-                        self.images.append(curnt_img)
-                        # Remove file extension to get the name
-                        name = os.path.splitext(cls)[0]
-                        self.class_names.append(name)
-                        print(f"✓ Loaded image for: {name}")
-                    else:
-                        print(f"✗ Could not load image: {cls}")
-                except Exception as e:
-                    print(f"✗ Error loading {cls}: {e}")
+            # Train recognizer
+            faces = np.array(faces)
+            labels = np.array(labels)
             
-            # Train LBPH face recognizer with grayscale faces
-            if len(self.images) > 0:
-                self.train_lbph(self.images, self.class_names)
-                print(f"✓ Model trained successfully for {len(self.class_names)} members: {self.class_names}")
-                self.model_trained = True
-            else:
-                print("✗ No valid images loaded - model not trained")
-                
+            self.recognizer.train(faces, labels)
+            self.model_trained = True
+            
+            print(f"✓ Model trained with {len(self.class_names)} members: {self.class_names}")
+            print(f"✓ Confidence threshold: {self.confidence_threshold}")
+            
         except Exception as e:
-            print(f"ERROR: Failed to load images: {e}")
-            self.model_trained = False
-    
-    def detect_largest_face(self, gray: np.ndarray) -> Tuple[int, int, int, int] | None:
-        # Enhance contrast for better detection
+            print(f"ERROR: Training failed: {str(e)}")
+
+    def recognize_face_from_image(self, image):
+        """STRICT face recognition - only matches trained individuals"""
         try:
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            gray = clahe.apply(gray)
-        except Exception:
-            pass
-
-        cascade_paths = [
-            'haarcascade_frontalface_default.xml',
-            'haarcascade_frontalface_alt2.xml',
-        ]
-        faces_all = []
-        for cascade_name in cascade_paths:
-            cascade = cv2.CascadeClassifier(cv2.data.haarcascades + cascade_name)
-            if cascade.empty():
-                continue
-            for scale in (1.1, 1.05):
-                faces = cascade.detectMultiScale(gray, scaleFactor=scale, minNeighbors=5, minSize=(60, 60))
-                if len(faces) > 0:
-                    faces_all.extend(list(faces))
-        if len(faces_all) == 0:
-            return None
-        x, y, w, h = sorted(faces_all, key=lambda f: f[2] * f[3], reverse=True)[0]
-        return (x, y, w, h)
-
-    def train_lbph(self, images: List[np.ndarray], names: List[str]) -> None:
-        self.recognizer = cv2.face.LBPHFaceRecognizer_create(radius=2, neighbors=16, grid_x=8, grid_y=8)
-        gray_samples = []
-        labels = []
-        filtered_names: List[str] = []
-        for img, name in zip(images, names):
-            try:
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                face = self.detect_largest_face(gray)
-                if face is None:
-                    print(f"No face detected for: {name}")
-                    continue
-                x, y, w, h = face
-                roi = gray[y:y+h, x:x+w]
-                roi_resized = cv2.resize(roi, (200, 200))
-                gray_samples.append(roi_resized)
-                labels.append(len(filtered_names))
-                filtered_names.append(name)
-                print(f"Prepared LBPH sample for: {name}")
-            except Exception as e:
-                print(f"Error preparing sample for {name}: {e}")
-        if len(gray_samples) == 0:
-            # Fallback: use centered crop as a last resort so MVP still works
-            for img, name in zip(images, names):
-                try:
-                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    h, w = gray.shape[:2]
-                    side = int(min(h, w) * 0.6)
-                    cx, cy = w // 2, h // 2
-                    x = max(0, cx - side // 2)
-                    y = max(0, cy - side // 2)
-                    roi = gray[y:y + side, x:x + side]
-                    if roi.size == 0:
-                        continue
-                    roi_resized = cv2.resize(roi, (200, 200))
-                    gray_samples.append(roi_resized)
-                    labels.append(len(filtered_names))
-                    filtered_names.append(name)
-                    print(f"Fallback center-crop sample used for: {name}")
-                except Exception as e:
-                    print(f"Fallback sample error for {name}: {e}")
-        if len(gray_samples) == 0:
-            print("No valid samples found to train recognizer")
-            self.class_names = []
-            return
-        self.recognizer.train(gray_samples, np.array(labels))
-        self.class_names = filtered_names
-    
-    def recognize_face_from_image(self, image_path_or_array):
-        """Recognize face from image file or numpy array"""
-        try:
-            # Handle both file path and numpy array input
-            if isinstance(image_path_or_array, str):
-                img = cv2.imread(image_path_or_array)
-            else:
-                img = image_path_or_array
+            if not self.model_trained:
+                return {
+                    "success": False,
+                    "error": "Model not trained",
+                    "faces_found": 0,
+                    "results": []
+                }
             
-            if img is None:
-                return {"error": "Could not load image"}
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # Convert to grayscale and detect faces
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = []
-            # Try detection, otherwise fallback to center crop
-            det = self.detect_largest_face(gray)
-            if det is not None:
-                faces = [det]
-            else:
-                h, w = gray.shape[:2]
-                side = int(min(h, w) * 0.6)
-                cx, cy = w // 2, h // 2
-                x = max(0, cx - side // 2)
-                y = max(0, cy - side // 2)
-                faces = [(x, y, side, side)]
-
+            # Detect faces with same strict parameters as training
+            faces = self.face_cascade.detectMultiScale(
+                gray,
+                scaleFactor=1.05,
+                minNeighbors=6,
+                minSize=(self.min_face_size, self.min_face_size),
+                flags=cv2.CASCADE_SCALE_IMAGE
+            )
+            
+            if len(faces) == 0:
+                return {
+                    "success": True,
+                    "faces_found": 0,
+                    "results": [],
+                    "message": "No faces detected in image"
+                }
+            
             results = []
+            
             for (x, y, w, h) in faces:
-                roi = gray[y:y+h, x:x+w]
-                roi_resized = cv2.resize(roi, (200, 200))
-                label, distance = self.recognizer.predict(roi_resized) if hasattr(self, 'recognizer') else (-1, 1e9)
-                if 0 <= label < len(self.class_names):
+                face_roi = gray[y:y+h, x:x+w]
+                
+                # Quality validation
+                is_good_quality, quality_msg = self.validate_face_quality(face_roi)
+                if not is_good_quality:
+                    results.append({
+                        "matched": False,
+                        "name": "Unknown",
+                        "confidence": 0.0,
+                        "reason": f"Poor image quality: {quality_msg}",
+                        "team_data": {},
+                        "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)}
+                    })
+                    continue
+                
+                # Resize for recognition
+                face_roi = cv2.resize(face_roi, (200, 200))
+                
+                # Get prediction
+                label, distance = self.recognizer.predict(face_roi)
+                
+                print(f"Recognition: label={label}, distance={distance}, threshold={self.confidence_threshold}")
+                
+                # STRICT MATCHING CONDITIONS
+                is_valid_match = (
+                    distance <= self.confidence_threshold and  # Distance threshold
+                    distance <= self.max_distance_threshold and  # Max distance allowed
+                    label < len(self.class_names) and  # Valid label
+                    label >= 0  # Non-negative label
+                )
+                
+                if is_valid_match:
                     name = self.class_names[label]
-                    # Convert distance to pseudo-confidence (lower distance -> higher confidence)
-                    confidence = float(max(0.0, min(1.0, 1.0 - (distance / 100.0))))
-                    member_data = self.team_data.get(name, {})
-                    result = {
+                    
+                    # Calculate confidence (inverse of distance, normalized)
+                    confidence = max(0, (self.max_distance_threshold - distance) / self.max_distance_threshold)
+                    
+                    # Additional validation: Compare with training features
+                    training_face = self.training_features[label]
+                    similarity = cv2.compareHist(
+                        cv2.calcHist([face_roi], [0], None, [256], [0, 256]),
+                        cv2.calcHist([training_face], [0], None, [256], [0, 256]),
+                        cv2.HISTCMP_CORREL
+                    )
+                    
+                    # Require both distance AND histogram similarity
+                    if similarity < 0.7:  # Histogram correlation threshold
+                        results.append({
+                            "matched": False,
+                            "name": "Unknown",
+                            "confidence": confidence,
+                            "distance": distance,
+                            "similarity": similarity,
+                            "reason": f"Insufficient similarity to known faces (sim: {similarity:.3f})",
+                            "team_data": {},
+                            "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)}
+                        })
+                        continue
+                    
+                    # VALID MATCH FOUND
+                    team_data = self.team_data.get(name, {})
+                    results.append({
                         "matched": True,
                         "name": name,
                         "confidence": confidence,
-                        "face_location": (y, x+w, y+h, x),
-                        "team_data": member_data
-                    }
+                        "distance": distance,
+                        "similarity": similarity,
+                        "team_data": team_data,
+                        "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)},
+                        "reason": f"Verified team member (confidence: {confidence:.3f})"
+                    })
+                    
                 else:
-                    result = {
+                    # NO MATCH - Unknown person
+                    confidence = max(0, (self.max_distance_threshold - distance) / self.max_distance_threshold)
+                    results.append({
                         "matched": False,
-                        "name": "UNKNOWN",
-                        "confidence": 0.0,
-                        "face_location": (y, x+w, y+h, x),
-                        "team_data": {}
-                    }
-                results.append(result)
+                        "name": "Unknown",
+                        "confidence": confidence,
+                        "distance": distance,
+                        "reason": f"Not a recognized team member (distance: {distance:.1f})",
+                        "team_data": {},
+                        "bounding_box": {"x": int(x), "y": int(y), "width": int(w), "height": int(h)}
+                    })
             
             return {
                 "success": True,
-                "faces_found": len(results),
-                "results": results,
-                "timestamp": datetime.now().isoformat()
+                "faces_found": len(faces),
+                "results": results
             }
             
         except Exception as e:
-            return {"error": f"Recognition failed: {str(e)}"}
-    
-    def start_camera_recognition(self):
-        """Start real-time camera recognition (for testing)"""
-        cam = cv2.VideoCapture(0)
-        
-        while True:
-            ret, img = cam.read()
-            if not ret:
-                break
-                
-            # Resize for faster processing
-            imgs = cv2.resize(img, (0, 0), None, 0.33, 0.33)
-            imgs = cv2.cvtColor(imgs, cv2.COLOR_BGR2RGB)
-            img = imutils.resize(img, height=450, width=700)
-            
-            faces_cur_frame = face_recognition.face_locations(imgs)
-            encode = face_recognition.face_encodings(imgs, faces_cur_frame)
-            
-            for encode_face, face_loc in zip(encode, faces_cur_frame):
-                matches = face_recognition.compare_faces(self.encode_list_known, encode_face)
-                face_dis = face_recognition.face_distance(self.encode_list_known, encode_face)
-                
-                if len(face_dis) > 0:
-                    match_index = np.argmin(face_dis)
-                    
-                    if matches[match_index]:
-                        name = self.class_names[match_index].upper()
-                        y1, x2, y2, x1 = face_loc
-                        y1, x2, y2, x1 = y1*3, x2*3, y2*3, x1*3
-                        cv2.rectangle(img, (x1, y1), (x2, y2+9), (0, 255, 0), 2)
-                        cv2.rectangle(img, (x1, y2-32), (x2, y2+9), (0, 255, 0), cv2.FILLED)
-                        cv2.putText(img, name, (x1+5, y2+5), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
-                    else:
-                        y1, x2, y2, x1 = face_loc
-                        y1, x2, y2, x1 = y1*3, x2*3, y2*3, x1*3
-                        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cv2.rectangle(img, (x1, y2-32), (x2, y2+9), (0, 0, 255), cv2.FILLED)
-                        cv2.putText(img, "UNKNOWN", (x1+6, y2+6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
-            
-            cv2.imshow('FaceTrust AI - Face Recognition', img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        
-        cam.release()
-        cv2.destroyAllWindows()
+            print(f"Recognition error: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "faces_found": 0,
+                "results": []
+            }
 
-if __name__ == "__main__":
-    model = FaceRecognitionModel()
-    # model.start_camera_recognition()
+    def update_thresholds(self, confidence_threshold=None, max_distance=None, min_face_size=None):
+        """Update recognition thresholds for fine-tuning accuracy"""
+        if confidence_threshold is not None:
+            self.confidence_threshold = confidence_threshold
+        if max_distance is not None:
+            self.max_distance_threshold = max_distance
+        if min_face_size is not None:
+            self.min_face_size = min_face_size
+        
+        print(f"Updated thresholds: confidence={self.confidence_threshold}, max_distance={self.max_distance_threshold}, min_face={self.min_face_size}")
 
