@@ -8,16 +8,16 @@ class FaceRecognitionModel:
     def __init__(self, models_path="Models"):
         self.models_path = Path(models_path)
         
-        # BALANCED THRESHOLDS - Secure but functional
-        self.confidence_threshold = 80.0    # Reasonable threshold
-        self.min_face_size = 80            # Minimum face size
-        self.max_distance_threshold = 85.0  # Reasonable distance limit
-        self.min_match_confidence = 0.60    # 60% minimum confidence (realistic)
+        # LENIENT THRESHOLDS - Allow team members through
+        self.confidence_threshold = 120.0   # Much higher (was 80.0)
+        self.min_face_size = 80            # Keep same  
+        self.max_distance_threshold = 120.0 # Much higher (was 85.0)
+        self.min_match_confidence = 0.30    # Much lower - 30% (was 0.60)
         
         print("Initializing Face Recognition Model...")
-        print(f"BALANCED SECURITY MODE:")
+        print(f"LENIENT SECURITY MODE:")
         print(f"  Confidence threshold: {self.confidence_threshold}")
-        print(f"  Max distance: {self.max_distance_threshold}")
+        print(f"  Max distance: {self.max_distance_threshold}") 
         print(f"  Min confidence required: {self.min_match_confidence}")
         
         # Face detection and recognition
