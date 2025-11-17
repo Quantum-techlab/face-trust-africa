@@ -107,79 +107,42 @@ const BackendDiagnostic: React.FC = () => {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between p-3 rounded-lg border">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/20">
           <div className="flex items-center gap-3">
-            {status.isOnline ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            )}
+            <CheckCircle className="h-5 w-5 text-green-600" />
             <div>
-              <p className="font-medium">
-                {status.isOnline ? "Connected" : "Disconnected"}
+              <p className="font-medium text-green-800 dark:text-green-300">
+                Demo Mode Active
               </p>
-              <p className="text-sm text-muted-foreground">
-                Backend API Status
+              <p className="text-sm text-green-700 dark:text-green-400">
+                Using hardcoded data for instant verification
               </p>
             </div>
           </div>
-          <Badge variant={status.isOnline ? "default" : "destructive"}>
-            {status.isOnline ? "Online" : "Offline"}
-          </Badge>
+          <Badge className="bg-green-600">Demo</Badge>
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium">Endpoint:</p>
-          <code className="block p-2 bg-muted rounded text-sm break-all">
-            https://face-trust-africa-production.up.railway.app/health
+          <p className="text-sm font-medium">Mode:</p>
+          <code className="block p-2 bg-green-100 dark:bg-green-900/30 rounded text-sm">
+            Hardcoded Demo - Instant Verification
           </code>
         </div>
 
-        {status.responseTime && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <span className="text-sm font-medium">Response Time:</span>
-            <Badge variant="outline">{status.responseTime}ms</Badge>
-          </div>
-        )}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+          <span className="text-sm font-medium">Response Time:</span>
+          <Badge variant="outline" className="bg-green-50">~0ms (instant)</Badge>
+        </div>
 
-        {status.lastChecked && (
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-            <span className="text-sm font-medium">Last Checked:</span>
-            <span className="text-sm text-muted-foreground">
-              {status.lastChecked.toLocaleTimeString()}
-            </span>
-          </div>
-        )}
-
-        {status.error && (
-          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-red-800 dark:text-red-300">
-                  Connection Error
-                </p>
-                <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-                  {status.error}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+          <span className="text-sm font-medium">Test Subject:</span>
+          <span className="text-sm font-medium">Abdulrasaq Abdulrasaq</span>
+        </div>
 
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground">
-            Troubleshooting: If the backend is offline, check Railway deployment
-            status at{" "}
-            <a
-              href="https://railway.app/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline ml-1"
-            >
-              Railway Dashboard
-            </a>
-            . Backend URL: https://face-trust-africa-production.up.railway.app
+            🎭 Demo mode active: Face verification returns instant success for demonstration purposes.
+            No Python backend connection required.
           </p>
         </div>
       </CardContent>
