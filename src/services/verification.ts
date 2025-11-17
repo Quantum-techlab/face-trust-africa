@@ -215,16 +215,16 @@ const mockIdentities: NonNullable<VerificationResponse["identity"]>[] = [
 export async function verifyFace(imageDataUrl: string): Promise<VerificationResponse> {
   const startTime = Date.now();
   
-  // Try Python face recognition API first
+  // Use mock face recognition service (demo mode)
   try {
-    const apiResult = await faceRecognitionService.recognizeFace(imageDataUrl);
-    // Always prefer API result if reachable (even if no match)
+    const apiResult = await faceRecognitionService.verifyFace(imageDataUrl);
+    // Return instant result
     return {
       ...apiResult,
       processing_time: Date.now() - startTime
     };
   } catch (error) {
-    console.log('Python API error, falling back to mock:', error);
+    console.log('Face recognition error:', error);
   }
   
   // Simulate network latency and AI processing time
