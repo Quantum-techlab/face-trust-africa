@@ -28,6 +28,7 @@ interface VerificationResult {
     address_city?: string;
     address_state?: string;
     address_country?: string;
+    address_postal_code?: string;
     social_media?: {
       facebook?: string;
       twitter?: string;
@@ -41,12 +42,25 @@ interface VerificationResult {
       employment?: string;
     };
     drivers_license_status?: "Valid" | "Expired" | "Suspended";
+    license_class?: string;
+    license_issue_date?: string;
+    license_expiry_date?: string;
     passport_status?: "Valid" | "Expired";
+    passport_issue_date?: string;
+    passport_expiry_date?: string;
+    passport_issuing_authority?: string;
     voters_id_status?: "Active" | "Inactive";
+    voters_id_number?: string;
+    polling_unit?: string;
+    marital_status?: string;
+    blood_type?: string;
+    tax_id?: string;
+    professional_certifications?: string[];
     verification_history?: {
       last_verified?: string;
       verification_count?: number;
       risk_score?: number;
+      trust_score?: number;
     };
   } | null;
   reason?: string;
@@ -254,39 +268,176 @@ const VerificationResultCard: React.FC<{ result: VerificationResult | null; load
 
               <Separator />
 
-              {/* Official Documents */}
-              <div>
-                <h4 className="font-medium mb-2">Official Documents</h4>
-                <div className="space-y-2 text-sm">
-                  {result.identity.nin && (
-                    <div className="flex justify-between"><span className="text-muted-foreground">NIN:</span><span className="font-mono">{result.identity.nin}</span></div>
-                  )}
-                  {result.identity.license_number && (
-                    <div className="flex justify-between"><span className="text-muted-foreground">Driver's License No:</span><span className="font-mono">{result.identity.license_number}</span></div>
-                  )}
-                  {result.identity.passport_number && (
-                    <div className="flex justify-between"><span className="text-muted-foreground">Passport No:</span><span className="font-mono">{result.identity.passport_number}</span></div>
-                  )}
-                </div>
-              </div>
+              {/* Official Documents Section - Enhanced */}
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Official Identity Documents
+                </h4>
+                
+                {/* National ID Card */}
+                {result.identity.nin && (
+                  <div className="p-3 rounded-lg border bg-card">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium">National Identity Number (NIN)</span>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Verified</Badge>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">ID Number:</span>
+                        <span className="font-mono font-semibold">{result.identity.nin}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Unique ID:</span>
+                        <span className="font-mono">{result.identity.unique_id_number}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {/* Official Status */}
-              <div>
-                <h4 className="font-medium mb-2">Official Status</h4>
-                <div className="grid sm:grid-cols-3 gap-3 text-sm">
-                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
-                    <span className="text-muted-foreground">License</span>
-                    <Badge variant="outline">{result.identity.drivers_license_status || 'Unknown'}</Badge>
+                {/* Driver's License */}
+                {result.identity.license_number && (
+                  <div className="p-3 rounded-lg border bg-card">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium">Driver&apos;s License</span>
+                      <Badge 
+                        variant="outline" 
+                        className={result.identity.drivers_license_status === "Valid" 
+                          ? "bg-green-50 text-green-700 border-green-200" 
+                          : "bg-red-50 text-red-700 border-red-200"}
+                      >
+                        {result.identity.drivers_license_status || "Unknown"}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">License Number:</span>
+                        <span className="font-mono font-semibold">{result.identity.license_number}</span>
+                      </div>
+                      {result.identity.license_class && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Class:</span>
+                          <span>{result.identity.license_class}</span>
+                        </div>
+                      )}
+                      {result.identity.license_issue_date && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Issue Date:</span>
+                          <span>{formatDOB(result.identity.license_issue_date)}</span>
+                        </div>
+                      )}
+                      {result.identity.license_expiry_date && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Expiry Date:</span>
+                          <span className="font-medium">{formatDOB(result.identity.license_expiry_date)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
-                    <span className="text-muted-foreground">Passport</span>
-                    <Badge variant="outline">{result.identity.passport_status || 'Unknown'}</Badge>
+                )}
+
+                {/* International Passport */}
+                {result.identity.passport_number && (
+                  <div className="p-3 rounded-lg border bg-card">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium">International Passport</span>
+                      <Badge 
+                        variant="outline"
+                        className={result.identity.passport_status === "Valid" 
+                          ? "bg-green-50 text-green-700 border-green-200" 
+                          : "bg-red-50 text-red-700 border-red-200"}
+                      >
+                        {result.identity.passport_status || "Unknown"}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Passport Number:</span>
+                        <span className="font-mono font-semibold">{result.identity.passport_number}</span>
+                      </div>
+                      {result.identity.passport_issuing_authority && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Issuing Authority:</span>
+                          <span className="text-xs">{result.identity.passport_issuing_authority}</span>
+                        </div>
+                      )}
+                      {result.identity.passport_issue_date && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Issue Date:</span>
+                          <span>{formatDOB(result.identity.passport_issue_date)}</span>
+                        </div>
+                      )}
+                      {result.identity.passport_expiry_date && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Expiry Date:</span>
+                          <span className="font-medium">{formatDOB(result.identity.passport_expiry_date)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-2 rounded bg-muted/30 flex items-center justify-between">
-                    <span className="text-muted-foreground">Voter's ID</span>
-                    <Badge variant="outline">{result.identity.voters_id_status || 'Unknown'}</Badge>
+                )}
+
+                {/* Voter's Card */}
+                {result.identity.voters_id_number && (
+                  <div className="p-3 rounded-lg border bg-card">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium">Permanent Voter&apos;s Card (PVC)</span>
+                      <Badge 
+                        variant="outline"
+                        className={result.identity.voters_id_status === "Active" 
+                          ? "bg-green-50 text-green-700 border-green-200" 
+                          : "bg-yellow-50 text-yellow-700 border-yellow-200"}
+                      >
+                        {result.identity.voters_id_status || "Unknown"}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">VIN:</span>
+                        <span className="font-mono font-semibold">{result.identity.voters_id_number}</span>
+                      </div>
+                      {result.identity.polling_unit && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Polling Unit:</span>
+                          <span className="text-xs">{result.identity.polling_unit}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Additional IDs */}
+                {(result.identity.tax_id || result.identity.marital_status || result.identity.blood_type) && (
+                  <div className="p-3 rounded-lg border bg-muted/30">
+                    <h5 className="text-sm font-medium mb-2">Additional Information</h5>
+                    <div className="space-y-1 text-sm">
+                      {result.identity.tax_id && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tax ID (TIN):</span>
+                          <span className="font-mono">{result.identity.tax_id}</span>
+                        </div>
+                      )}
+                      {result.identity.marital_status && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Marital Status:</span>
+                          <span>{result.identity.marital_status}</span>
+                        </div>
+                      )}
+                      {result.identity.blood_type && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Blood Type:</span>
+                          <span className="font-semibold text-red-600">{result.identity.blood_type}</span>
+                        </div>
+                      )}
+                      {result.identity.address_postal_code && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Postal Code:</span>
+                          <span className="font-mono">{result.identity.address_postal_code}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Social Media */}
@@ -312,6 +463,25 @@ const VerificationResultCard: React.FC<{ result: VerificationResult | null; load
           </TabsContent>
 
           <TabsContent value="records" className="mt-4 space-y-4">
+            {/* Professional Certifications */}
+            {result.identity.professional_certifications && result.identity.professional_certifications.length > 0 && (
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Professional Certifications
+                </h4>
+                <div className="space-y-2">
+                  {result.identity.professional_certifications.map((cert, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded border bg-card">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span className="text-sm">{cert}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Separator />
             {result.identity.public_records && (
               <div className="space-y-4">
                 <div>
