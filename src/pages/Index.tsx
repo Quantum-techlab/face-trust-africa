@@ -61,6 +61,20 @@ const Index = () => {
         </Link>
         <nav className="flex items-center gap-6">
           <Link
+            to="/how-it-works"
+            className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            How It Works
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[hsl(var(--brand))] transition-all group-hover:w-full"></span>
+          </Link>
+          <Link
+            to="/dashboard"
+            className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+          >
+            Dashboard
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[hsl(var(--brand))] transition-all group-hover:w-full"></span>
+          </Link>
+          <Link
             to="/verify"
             className="relative text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
           >
@@ -765,30 +779,24 @@ const Index = () => {
               <h4 className="font-semibold mb-3">Platform</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link
-                    to="/verify"
-                    className="hover:text-foreground transition-colors"
-                  >
+                  <Link to="/verify" className="hover:text-foreground transition-colors">
                     Face Verification
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to="/login"
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Officer Portal
+                  <Link to="/how-it-works" className="hover:text-foreground transition-colors">
+                    How It Works
                   </Link>
                 </li>
                 <li>
-                  <span className="cursor-not-allowed opacity-50">
-                    API Documentation
-                  </span>
+                  <Link to="/dashboard" className="hover:text-foreground transition-colors">
+                    Dashboard
+                  </Link>
                 </li>
                 <li>
-                  <span className="cursor-not-allowed opacity-50">
-                    Developer Tools
-                  </span>
+                  <Link to="/login" className="hover:text-foreground transition-colors">
+                    Officer Portal
+                  </Link>
                 </li>
               </ul>
             </div>
