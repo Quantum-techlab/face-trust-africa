@@ -136,7 +136,7 @@ const BackendDiagnostic: React.FC = () => {
 
         <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
           <span className="text-sm font-medium">Test Subject:</span>
-          <span className="text-sm font-medium">Abdulrasaq Abdulrasaq</span>
+          <span className="text-sm font-medium">Adeniji Elijah Adetomiwa</span>
         </div>
 
         <div className="pt-2 border-t">

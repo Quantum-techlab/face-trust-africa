@@ -110,85 +110,85 @@ export interface RecognitionResult {
 
 // Hardcoded demo data with comprehensive identity information
 const MOCK_DATA = {
-  full_name: "Abdulrasaq Abdulrasaq",
-  first_name: "Abdulrasaq",
-  middle_name: "Adeola",
-  last_name: "Abdulrasaq",
-  position: "Founder & CEO",
-  department: "Executive",
-  employee_id: "FT001",
-  email: "abdulrasaq@facetrust.ai",
-  phone: "+234-801-234-5678",
+  full_name: "Adeniji Elijah Adetomiwa",
+  first_name: "Adeniji",
+  middle_name: "Elijah",
+  last_name: "Adetomiwa",
+  position: "Software Engineer",
+  department: "Technology",
+  employee_id: "FT-2024-0731",
+  email: "adeniji.adetomiwa@outlook.com",
+  phone: "+234-809-456-7821",
   
   // National Identity
-  nin: "12345678901",
-  unique_id_number: "FT-EMP-001",
+  nin: "70483291056",
+  unique_id_number: "NIN-70483291056",
   
   // Driver's License
-  license_number: "LAG-A12345678",
+  license_number: "LAG-D87654321",
   drivers_license_status: "Valid" as const,
-  license_issue_date: "2020-03-15",
-  license_expiry_date: "2025-03-14",
-  license_class: "Class C - Private Vehicle",
+  license_issue_date: "2021-08-20",
+  license_expiry_date: "2026-08-19",
+  license_class: "Class B - Light Vehicle",
   
   // Passport
-  passport_number: "A50123456",
+  passport_number: "B08741263",
   passport_status: "Valid" as const,
-  passport_issue_date: "2022-06-10",
-  passport_expiry_date: "2032-06-09",
-  passport_issuing_authority: "Nigerian Immigration Service",
+  passport_issue_date: "2023-02-14",
+  passport_expiry_date: "2033-02-13",
+  passport_issuing_authority: "Nigerian Immigration Service (NIS)",
   
   // Voter's Card
-  voters_id_number: "90-A123456789",
+  voters_id_number: "19-F087412639",
   voters_id_status: "Active" as const,
-  polling_unit: "Unit 012, Ikeja Ward",
+  polling_unit: "Unit 007, Surulere Ward III",
   
   // Personal Information
   gender: "Male",
-  date_of_birth: "1995-01-15",
-  age: 29,
+  date_of_birth: "1999-07-31",
+  age: 26,
   nationality: "Nigerian",
   marital_status: "Single",
-  blood_type: "O+",
+  blood_type: "A+",
   
   // Address
-  address_street: "45 Innovation Drive",
+  address_street: "12 Bode Thomas Street, Surulere",
   address_city: "Lagos",
   address_state: "Lagos State",
   address_country: "Nigeria",
-  address_postal_code: "101233",
+  address_postal_code: "101283",
   
   // Social Media
   social_media: {
-    linkedin: "linkedin.com/in/abdulrasaq-abdulrasaq",
-    twitter: "@abdulrasaq",
-    facebook: "facebook.com/abdulrasaq.abdulrasaq"
+    linkedin: "linkedin.com/in/adeniji-adetomiwa",
+    twitter: "@adeniji_eli",
+    facebook: "facebook.com/adeniji.adetomiwa"
   },
   
   // Public Records
   public_records: {
     voter_registration: true,
-    business_registration: "FaceTrust AI Limited (RC: 1234567)",
-    education: ["BSc Computer Science - University of Lagos", "MSc Artificial Intelligence - MIT"],
-    employment: "Founder & CEO at FaceTrust AI"
+    business_registration: "Adetomiwa Tech Solutions (RC: 2847193)",
+    education: ["BSc Computer Science - University of Lagos", "Professional Diploma in Cybersecurity - NIIT"],
+    employment: "Software Engineer at FaceTrust AI"
   },
   
   // Verification History
   verification_history: {
     last_verified: new Date().toISOString(),
-    verification_count: 47,
-    risk_score: 2,
-    trust_score: 98
+    verification_count: 12,
+    risk_score: 3,
+    trust_score: 97
   },
   
   // Tax Information
-  tax_id: "TIN-12345678-0001",
+  tax_id: "TIN-28471930-0042",
   
   // Professional
   professional_certifications: [
-    "Certified Ethical Hacker (CEH)",
-    "AWS Solutions Architect",
-    "ISO 27001 Lead Implementer"
+    "Oracle Certified Professional (OCP)",
+    "CompTIA Security+",
+    "Google Cloud Associate Engineer"
   ]
 };
 
@@ -197,7 +197,7 @@ export class FaceRecognitionService {
 
   private constructor() {
     console.log("🎭 FaceRecognitionService initialized in DEMO MODE");
-    console.log("✓ Using hardcoded data for Abdulrasaq Abdulrasaq");
+    console.log("✓ Using hardcoded data for Adeniji Elijah Adetomiwa");
   }
 
   public static getInstance(): FaceRecognitionService {
@@ -209,7 +209,7 @@ export class FaceRecognitionService {
 
   async verifyFace(imageBase64: string): Promise<RecognitionResult> {
     // Simulate instant verification with hardcoded success
-    console.log("🎭 Mock verification - instantly returning success for Abdulrasaq Abdulrasaq");
+    console.log("🎭 Mock verification - instantly returning success for Adeniji Elijah Adetomiwa");
     
     return {
       matched: true,
