@@ -323,7 +323,7 @@ const Verify: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-lg font-bold text-blue-800 dark:text-blue-200">
-                        {teamCount}
+                        20
                       </p>
                     </div>
                   </div>
